@@ -20,36 +20,21 @@ class MeanFieldEstimator():
 
         self.mean_field_estimate = {}
 
-        self.fixed_indices = fixed_indices
-        self.fixed_values = fixed_values
-
         self.state_info = {i: [] for i in range(self.num_states)}
         self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
 
 
-    def sample_particles(self):
+    def sample_particles(self, fixed_indices, fixed_values):
         self.particles = np.zeros((self.num_states, self.num_particles, self.num_states))
         for state in range(self.num_states):
                 self.particles[state] = self._sample_constrained_dirichlet(
-                                        fixed_indices=self.fixed_indices[state], 
-                                        fixed_values=self.fixed_values[state], D=self.num_particles) 
+                                        fixed_indices[state], fixed_values[state], D=self.num_particles) 
     
-    def _likelihood(self, y, x_i):
-        """
-        Computes the likelihood of observation y given particle x_i
-        under a unit-variance Gaussian assumption (N(x_i, I)).
-
-        Args:
-            y (np.ndarray): observation vector
-            x_i (np.ndarray): particle vector
-
-        Returns:
-            float: unnormalized likelihood value
-        """
+    def _likelihood(self, y, x_i): 
         diff = y - x_i
         exponent = -0.5 * np.dot(diff, diff)  # equivalent to -0.5 * ||y - x_i||^2
-        return np.exp(exponent)
+        return np.exp(exponent) # Gaussian prior
 
 
     def _sample_constrained_dirichlet(self, fixed_indices, fixed_values, alpha=1.0, D=1):
@@ -95,18 +80,6 @@ class MeanFieldEstimator():
                     self.weights[state][i] *= self._likelihood(info, self.particles[state][i])
             # Step 3: Normalize
             self.weights[state] /= np.sum(self.weights[state])
-        '''
-
-        for state in range(self.num_states):
-            # Likelihoods for all particles (D x num_infos)
-            likelihoods = np.array([
-                [self._likelihood(info, particle) for info in self.state_info[state]]
-                for particle in self.particles[state]
-            ])  # shape: (D, num_infos)
-            
-            self.weights[state] = np.prod(likelihoods, axis=1)
-            self.weights[state] /= np.sum(self.weights[state])
-            '''
 
     def compute_estimate(self): 
         for state in range(self.num_states):
@@ -115,6 +88,9 @@ class MeanFieldEstimator():
             # Sum across the D particles
             self.mean_field_estimate[state] = np.sum(weighted_particles, axis=0)
             self.estimate_history[state].append(self.mean_field_estimate[state].copy())
+
+    def get_mf_estimate(self):
+        return self.mean_field_estimate
 
     def plot_estimates(self, true_mean_field=None):
         fig = plt.figure(figsize=(10, 7))
@@ -195,41 +171,40 @@ class MeanFieldEstimator():
         plt.tight_layout()
         plt.show()
 
-num_states = 4
-num_comm_rounds = 5
-num_particles = 5000
-num_agents = 500
-true_mean_field = (1/num_agents)*np.array([100, 50, 100, 250])
+if __name__ == "__main__":
+    num_states = 4
+    num_comm_rounds = 5
+    num_particles = 5000
+    num_agents = 500
+    true_mean_field = (1/num_agents)*np.array([100, 50, 100, 250])
 
-# Define comms graph
-G_comms = np.zeros((num_states, num_states))
-G_comms[0][1] = 1
-G_comms[1][0] = 1
-G_comms[1][2] = 1
-G_comms[2][1] = 1
-G_comms[2][3] = 1
-G_comms[3][2] = 1
+    # Define comms graph
+    G_comms = np.zeros((num_states, num_states))
+    G_comms[0][1] = 1
+    G_comms[1][0] = 1
+    G_comms[1][2] = 1
+    G_comms[2][1] = 1
+    G_comms[2][3] = 1
+    G_comms[3][2] = 1
 
-# Define init mean-field (can later define this based on the visualization graph)
-fixed_indices = {0: [0, 3], 1: [1, 2], 2: [1, 2], 3:[0, 3]}
-fixed_values = {0: [true_mean_field[0], true_mean_field[3]], 
-                1: [true_mean_field[1], true_mean_field[2]], 
-                2: [true_mean_field[1], true_mean_field[2]], 
-                3: [true_mean_field[0], true_mean_field[3]]}
+    # Define init mean-field (can later define this based on the visualization graph)
+    fixed_indices = {0: [0, 3], 1: [1, 2], 2: [1, 2], 3:[0, 3]}
+    fixed_values = {0: [true_mean_field[0], true_mean_field[3]], 
+                    1: [true_mean_field[1], true_mean_field[2]], 
+                    2: [true_mean_field[1], true_mean_field[2]], 
+                    3: [true_mean_field[0], true_mean_field[3]]}
 
-estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
-                            comms_graph=G_comms, 
-                            fixed_indices=fixed_indices, 
-                            fixed_values=fixed_values, seed=42)
+    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
+                                comms_graph=G_comms, seed=42)
 
-estimator.sample_particles()
+    estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
-for R in range(num_comm_rounds):
-    print(R)
+    for R in range(num_comm_rounds):
+        print(R)
+        estimator.compute_estimate()
+        estimator.get_new_info()
+        estimator.update_weights()
+
     estimator.compute_estimate()
-    estimator.get_new_info()
-    estimator.update_weights()
-
-estimator.compute_estimate()
-#estimator.plot_estimates(true_mean_field)
-estimator.plot_estimation_errors(true_mean_field)
+    #estimator.plot_estimates(true_mean_field)
+    estimator.plot_estimation_errors(true_mean_field)
