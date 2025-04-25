@@ -195,11 +195,11 @@ class MeanFieldEstimator():
         plt.tight_layout()
         plt.show()
 
-num_states = 4
-num_comm_rounds = 100000
-num_particles = 5000
+num_states = 3
+num_comm_rounds = 5
+num_particles = 1000
 num_agents = 500
-true_mean_field = (1/num_agents)*np.array([100, 50, 100, 250])
+true_mean_field = (1/num_agents)*np.array([100, 50, 250])
 
 # Define comms graph
 G_comms = np.zeros((num_states, num_states))
@@ -207,14 +207,14 @@ G_comms[0][1] = 1
 G_comms[1][0] = 1
 G_comms[1][2] = 1
 G_comms[2][1] = 1
-G_comms[2][3] = 1
-G_comms[3][2] = 1
+#G_comms[2][3] = 1
+#G_comms[3][2] = 1
 #G_comms[3][0] = 1
 #G_comms[0][3] = 1
 
 # Define init mean-field
-fixed_indices = {0: [0], 1: [1], 2: [2], 3:[3]}
-fixed_values = {0: [true_mean_field[0]], 1: [true_mean_field[1]], 2: [true_mean_field[2]], 3: [true_mean_field[3]]}
+fixed_indices = {0: [0], 1: [1], 2: [2]}
+fixed_values = {0: [true_mean_field[0]], 1: [true_mean_field[1]], 2: [true_mean_field[2]]}
 
 estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
                             comms_graph=G_comms, 
