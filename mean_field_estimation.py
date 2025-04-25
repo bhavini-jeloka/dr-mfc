@@ -21,11 +21,11 @@ class MeanFieldEstimator():
         self.mean_field_estimate = {}
 
         self.state_info = {i: [] for i in range(self.num_states)}
-        self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
 
 
     def sample_particles(self, fixed_indices, fixed_values):
+        self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
         self.particles = np.zeros((self.num_states, self.num_particles, self.num_states))
         for state in range(self.num_states):
                 self.particles[state] = self._sample_constrained_dirichlet(

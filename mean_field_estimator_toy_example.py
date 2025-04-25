@@ -20,7 +20,7 @@ def plot_reward(actual_reward, desired_reward):
 
 num_states = 3
 num_actions = 2
-num_timesteps = 10
+num_timesteps = 50
 num_agents = 500
 true_mean_field = (1/num_agents)*np.array([200, 50, 250])
 mean_field = true_mean_field
@@ -33,14 +33,14 @@ G_comms[1][0] = 1
 G_comms[1][2] = 1
 G_comms[2][1] = 1
 
-num_particles = 1000
-num_comm_rounds = 1000
+num_particles = 5000
+num_comm_rounds = 5
 
 # Define init mean-field (can later define this based on the visualization graph)
-fixed_indices = {0: [0], 1: [1], 2: [1]}
+fixed_indices = {0: [0], 1: [1], 2: [2]}
 
 estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
-                            comms_graph=G_comms, seed=42)
+                            comms_graph=G_comms, seed=4)
 dynamics = MeanFieldDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
 desired_dynamics = MeanFieldDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
 
@@ -54,7 +54,7 @@ for t in range(num_timesteps):
 
     fixed_values = {0: [mean_field[0]], 
                     1: [mean_field[1]], 
-                    2: [mean_field[1]]}
+                    2: [mean_field[2]]}
     
     estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
@@ -65,6 +65,7 @@ for t in range(num_timesteps):
 
     estimator.compute_estimate()
     mean_field_estimate = estimator.get_mf_estimate()
+    print("Estimated Mean-Field", mean_field_estimate)
 
     dynamics.compute_next_mean_field(obs=mean_field_estimate)
     mean_field = dynamics.get_mf()
