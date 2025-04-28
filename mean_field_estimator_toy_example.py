@@ -5,18 +5,30 @@ from mean_field_estimation import MeanFieldEstimator
 from mean_field_dynamics import MeanFieldDynamicsEval
 
 def plot_reward(actual_reward, desired_reward):
-        plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 10))
 
-        plt.plot(actual_reward, label=f"Actual Reward")
-        plt.plot(desired_reward, label=f"Desired Reward")
+    # First subplot: actual and desired rewards
+    plt.subplot(2, 1, 1)
+    plt.plot(actual_reward, label="Actual Reward", color='blue', linestyle='-', linewidth=2.5)
+    plt.plot(desired_reward, label="Desired Reward", color='orange', linestyle='--', linewidth=2.5)
+    plt.title("Accumulated Rewards", fontsize=16)
+    plt.xlabel("Timestep", fontsize=14)
+    plt.ylabel("Reward Value", fontsize=14)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend(fontsize=12)
 
-        plt.title("Accumulated Rewards")
-        plt.xlabel("Timestep")
-        plt.ylabel("Reward Value")
-        plt.grid(True)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+    # Second subplot: absolute difference
+    plt.subplot(2, 1, 2)
+    diff = np.abs(np.array(actual_reward) - np.array(desired_reward))
+    plt.plot(diff, label="Absolute Difference", color='green', linestyle='-', linewidth=2.5)
+    plt.title("Absolute Difference Between Rewards", fontsize=16)
+    plt.xlabel("Timestep", fontsize=14)
+    plt.ylabel("Absolute Difference", fontsize=14)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend(fontsize=12)
+
+    plt.tight_layout()
+    plt.show()
 
 num_states = 3
 num_actions = 2
@@ -65,16 +77,12 @@ for t in range(num_timesteps):
 
     estimator.compute_estimate()
     mean_field_estimate = estimator.get_mf_estimate()
-    print("Estimated Mean-Field", mean_field_estimate)
 
     dynamics.compute_next_mean_field(obs=mean_field_estimate)
     mean_field = dynamics.get_mf()
-    print("Actual Mean-Field", mean_field)
     
-
-    desired_dynamics.compute_next_mean_field(true_mean_field)
+    desired_dynamics.compute_next_mean_field(des_mean_field)
     des_mean_field = desired_dynamics.get_mf()
-    print("Desired Mean-Field", des_mean_field)
 
     #estimator.plot_estimates(true_mean_field)
     #estimator.plot_estimation_errors(true_mean_field)
