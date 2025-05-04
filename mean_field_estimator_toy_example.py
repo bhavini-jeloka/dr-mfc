@@ -68,14 +68,18 @@ for t in range(num_timesteps):
                     1: [mean_field[1]], 
                     2: [mean_field[2]]}
     
-    estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
+    #estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
+    estimator.initialize_mean_field(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
     for R in range(num_comm_rounds):
-        estimator.compute_estimate()
+        #estimator.compute_estimate()
+        #estimator.get_new_info()
+        #estimator.update_weights()
         estimator.get_new_info()
-        estimator.update_weights()
+        estimator.get_projected_average_estimate(fixed_indices, fixed_values)
+        estimator.compute_estimate(copy=True)
 
-    estimator.compute_estimate()
+    #estimator.compute_estimate()
     mean_field_estimate = estimator.get_mf_estimate()
 
     dynamics.compute_next_mean_field(obs=mean_field_estimate)
