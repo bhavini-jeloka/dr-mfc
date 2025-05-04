@@ -19,6 +19,7 @@ class MeanFieldEstimator():
         self.G_comms = comms_graph
 
         self.mean_field_estimate = {}
+        self.mean_field_estimate_copy = {}
 
         self.state_info = {i: [] for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
@@ -65,6 +66,13 @@ class MeanFieldEstimator():
         full_samples[:, free_indices] = scaled_samples
 
         return full_samples  # shape: (D, num_states)
+    
+    def initialize_mean_field(self, fixed_indices, fixed_values):
+        for state in range(self.num_states):
+            self.mean_field_estimate[state] = self._sample_constrained_dirichlet(
+                                        fixed_indices[state], fixed_values[state], D=1)
+            self.estimate_history[state].append(self.mean_field_estimate[state].copy())
+
 
     def get_new_info(self):
         for i in range(self.num_states):
@@ -72,6 +80,24 @@ class MeanFieldEstimator():
             for j in range(self.num_states):
                 if self.G_comms[i][j]:  # only based on one-hop neighbor
                     self.state_info[i].append(self.mean_field_estimate[j])
+
+    def get_projected_average_estimate(self, fixed_indices, fixed_values):
+        for state in range(self.num_states):
+            # Start with the initial mean field estimate
+            estimated_mf = self.mean_field_estimate[state]
+
+            # Efficiently sum all info from state_info[state] using np.sum
+            estimated_mf += np.sum(self.state_info[state], axis=0)
+
+            # Average the sum: divide by number of elements in state_info[state] + 1 (the initial estimate)
+            total_elements = len(self.state_info[state]) + 1
+            estimated_mf /= total_elements
+
+            # Project the result onto the simplex with fixed indices
+            self.mean_field_estimate_copy[state] = self.project_to_partial_simplex(
+                estimated_mf, fixed_indices[state], fixed_values[state]
+            )
+
 
     def update_weights(self):
         for state in range(self.num_states):
@@ -81,16 +107,48 @@ class MeanFieldEstimator():
             # Step 3: Normalize
             self.weights[state] /= np.sum(self.weights[state])
 
-    def compute_estimate(self): 
+    def compute_estimate(self, copy=False): 
         for state in range(self.num_states):
-            # Reshape weights to (D, 1) so broadcasting works with (D, num_states)
-            weighted_particles = self.weights[state][:, None] * self.particles[state]
-            # Sum across the D particles
-            self.mean_field_estimate[state] = np.sum(weighted_particles, axis=0)
+            if copy: 
+                self.mean_field_estimate[state] = self.mean_field_estimate_copy[state]
+            else:
+                # Reshape weights to (D, 1) so broadcasting works with (D, num_states)
+                weighted_particles = self.weights[state][:, None] * self.particles[state]
+                # Sum across the D particles
+                self.mean_field_estimate[state] = np.sum(weighted_particles, axis=0)
             self.estimate_history[state].append(self.mean_field_estimate[state].copy())
 
     def get_mf_estimate(self):
         return self.mean_field_estimate
+    
+    def project_to_partial_simplex(self, z, fixed_indices, x_fixed_values):
+        z = np.squeeze(z)
+        n = len(z)
+        x = np.zeros(n)
+        x[fixed_indices] = x_fixed_values
+
+        # Identify free indices
+        all_indices = set(range(n))
+        free_indices = sorted(list(all_indices - set(fixed_indices)))
+        
+        z_free = z[free_indices]
+        rhs = 1.0 - np.sum(x_fixed_values)
+
+        # Project z_free onto simplex of mass = rhs
+        x_free = self.project_onto_simplex(z_free, rhs)
+        x[free_indices] = x_free
+        return x
+
+    def project_onto_simplex(self, v, z=1.0):
+        """Projects vector v onto the simplex {x : x >= 0, sum x = z}"""
+        v = np.asarray(v)
+        n = len(v)
+        u = np.sort(v)[::-1]
+        cssv = np.cumsum(u)
+        
+        rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
+        theta = (cssv[rho] - z) / (rho + 1)
+        return np.maximum(v - theta, 0)
 
     def plot_estimates(self, true_mean_field=None):
         fig = plt.figure(figsize=(10, 7))
@@ -157,6 +215,7 @@ class MeanFieldEstimator():
 
         for state in range(self.num_states):
             history = np.array(self.estimate_history[state])  # shape: (T, 3)
+            history = np.vstack(history)
             
             # Compute L2 norm error between estimate and true mean field at each timestep
             errors = np.linalg.norm(history - true_mean_field, axis=1)  # shape: (T,)
@@ -172,11 +231,12 @@ class MeanFieldEstimator():
         plt.show()
 
 if __name__ == "__main__":
-    num_states = 4
-    num_comm_rounds = 5
+    num_states = 3 #4
+    num_comm_rounds = 10
     num_particles = 5000
     num_agents = 500
-    true_mean_field = (1/num_agents)*np.array([100, 50, 100, 250])
+    #true_mean_field = (1/num_agents)*np.array([100, 50, 100, 250])
+    true_mean_field = (1/num_agents)*np.array([200, 50, 250])
 
     # Define comms graph
     G_comms = np.zeros((num_states, num_states))
@@ -184,27 +244,36 @@ if __name__ == "__main__":
     G_comms[1][0] = 1
     G_comms[1][2] = 1
     G_comms[2][1] = 1
-    G_comms[2][3] = 1
-    G_comms[3][2] = 1
+    #G_comms[2][3] = 1
+    #G_comms[3][2] = 1
 
     # Define init mean-field (can later define this based on the visualization graph)
+    '''
     fixed_indices = {0: [0, 3], 1: [1, 2], 2: [1, 2], 3:[0, 3]}
     fixed_values = {0: [true_mean_field[0], true_mean_field[3]], 
                     1: [true_mean_field[1], true_mean_field[2]], 
                     2: [true_mean_field[1], true_mean_field[2]], 
                     3: [true_mean_field[0], true_mean_field[3]]}
+    '''
+
+    fixed_indices = {0: [0], 1: [1], 2: [2]}
+    fixed_values = {0: [true_mean_field[0]], 
+                    1: [true_mean_field[1]], 
+                    2: [true_mean_field[2]]}
 
     estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
                                 comms_graph=G_comms, seed=42)
 
-    estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
+    #estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
+    estimator.initialize_mean_field(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
     for R in range(num_comm_rounds):
-        print(R)
-        estimator.compute_estimate()
+        print('Round', R)
         estimator.get_new_info()
-        estimator.update_weights()
+        estimator.get_projected_average_estimate(fixed_indices, fixed_values)
+        estimator.compute_estimate(copy=True)
+        #estimator.update_weights()
 
-    estimator.compute_estimate()
+    #estimator.compute_estimate()
     #estimator.plot_estimates(true_mean_field)
     estimator.plot_estimation_errors(true_mean_field)
