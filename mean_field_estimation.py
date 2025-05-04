@@ -231,12 +231,11 @@ class MeanFieldEstimator():
         plt.show()
 
 if __name__ == "__main__":
-    num_states = 3 #4
-    num_comm_rounds = 10
+    num_states = 4
+    num_comm_rounds = 100
     num_particles = 5000
     num_agents = 500
-    #true_mean_field = (1/num_agents)*np.array([100, 50, 100, 250])
-    true_mean_field = (1/num_agents)*np.array([200, 50, 250])
+    true_mean_field = (1/num_agents)*np.array([100, 50, 350, 0])
 
     # Define comms graph
     G_comms = np.zeros((num_states, num_states))
@@ -248,6 +247,13 @@ if __name__ == "__main__":
     #G_comms[3][2] = 1
 
     # Define init mean-field (can later define this based on the visualization graph)
+    
+    fixed_indices = {0: [0], 1: [1], 2: [2], 3:[3]}
+    fixed_values = {0: [true_mean_field[0]], 
+                    1: [true_mean_field[1]], 
+                    2: [true_mean_field[2]], 
+                    3: [true_mean_field[3]]}
+    
     '''
     fixed_indices = {0: [0, 3], 1: [1, 2], 2: [1, 2], 3:[0, 3]}
     fixed_values = {0: [true_mean_field[0], true_mean_field[3]], 
@@ -255,11 +261,14 @@ if __name__ == "__main__":
                     2: [true_mean_field[1], true_mean_field[2]], 
                     3: [true_mean_field[0], true_mean_field[3]]}
     '''
+    
+    '''
 
     fixed_indices = {0: [0], 1: [1], 2: [2]}
     fixed_values = {0: [true_mean_field[0]], 
                     1: [true_mean_field[1]], 
                     2: [true_mean_field[2]]}
+    '''
 
     estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
                                 comms_graph=G_comms, seed=42)
