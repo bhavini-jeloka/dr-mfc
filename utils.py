@@ -26,7 +26,6 @@ def project_onto_l1_ball(x, radius=1.0):
     return np.sign(x) * np.maximum(u - theta, 0)
 
 
-# Sampling from the L1 ball using Dirichlet
 def sample_l1_ball(n, d, x_c, R=1.0):
     # Step 1: Sample from an L1 ball centered at the origin
     exp_samples = np.random.exponential(scale=1.0, size=(n, d))  # Positive values
@@ -46,14 +45,10 @@ def sample_l1_ball(n, d, x_c, R=1.0):
 
     return torch.tensor(x, dtype=torch.float32)
 
+
 def plot_l1_ball_with_samples(x_c, R, samples):
     """
     Plots the L1 ball around a center point `x_c` in 2D or 3D and overlays sampled points.
-
-    Args:
-        x_c (array): Center of the L1 ball (must be 2D or 3D for visualization).
-        R (float): Radius of the L1 ball.
-        samples (array): Sampled points from the L1 ball.
     """
     x_c = np.array(x_c)
     d = len(x_c)
@@ -107,6 +102,7 @@ def plot_l1_ball_with_samples(x_c, R, samples):
         ax.legend()
     
     plt.show()
+
 
 def plot_performance_comparison(test_sample_indices, robust_performance,  nominal_pi_performance):
     # Create scatter plot
@@ -185,6 +181,7 @@ def plot_estimates(estimate_history, num_states, true_mean_field=None):
         plt.tight_layout()
         plt.show()
 
+
 def plot_estimation_errors(estimate_history, true_mean_field, num_states):
     plt.figure(figsize=(10, 6))
 
@@ -202,5 +199,32 @@ def plot_estimation_errors(estimate_history, true_mean_field, num_states):
     plt.ylabel("L2 Norm Error")
     plt.grid(True)
     plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_reward(actual_reward, desired_reward):
+    plt.figure(figsize=(12, 10))
+
+    # First subplot: actual and desired rewards
+    plt.subplot(2, 1, 1)
+    plt.plot(actual_reward, label="Actual Reward", color='blue', linestyle='-', linewidth=2.5)
+    plt.plot(desired_reward, label="Desired Reward", color='orange', linestyle='--', linewidth=2.5)
+    plt.title("Accumulated Rewards", fontsize=16)
+    plt.xlabel("Timestep", fontsize=14)
+    plt.ylabel("Reward Value", fontsize=14)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend(fontsize=12)
+
+    # Second subplot: absolute difference
+    plt.subplot(2, 1, 2)
+    diff = np.abs(np.array(actual_reward) - np.array(desired_reward))
+    plt.plot(diff, label="Absolute Difference", color='green', linestyle='-', linewidth=2.5)
+    plt.title("Absolute Difference Between Rewards", fontsize=16)
+    plt.xlabel("Timestep", fontsize=14)
+    plt.ylabel("Absolute Difference", fontsize=14)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend(fontsize=12)
+
     plt.tight_layout()
     plt.show()

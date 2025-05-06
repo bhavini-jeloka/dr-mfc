@@ -3,32 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mean_field_estimation import MeanFieldEstimator
 from mean_field_dynamics import MeanFieldDynamicsEval
-
-def plot_reward(actual_reward, desired_reward):
-    plt.figure(figsize=(12, 10))
-
-    # First subplot: actual and desired rewards
-    plt.subplot(2, 1, 1)
-    plt.plot(actual_reward, label="Actual Reward", color='blue', linestyle='-', linewidth=2.5)
-    plt.plot(desired_reward, label="Desired Reward", color='orange', linestyle='--', linewidth=2.5)
-    plt.title("Accumulated Rewards", fontsize=16)
-    plt.xlabel("Timestep", fontsize=14)
-    plt.ylabel("Reward Value", fontsize=14)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.legend(fontsize=12)
-
-    # Second subplot: absolute difference
-    plt.subplot(2, 1, 2)
-    diff = np.abs(np.array(actual_reward) - np.array(desired_reward))
-    plt.plot(diff, label="Absolute Difference", color='green', linestyle='-', linewidth=2.5)
-    plt.title("Absolute Difference Between Rewards", fontsize=16)
-    plt.xlabel("Timestep", fontsize=14)
-    plt.ylabel("Absolute Difference", fontsize=14)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.legend(fontsize=12)
-
-    plt.tight_layout()
-    plt.show()
+from utils import *
 
 num_states = 3
 num_actions = 2
