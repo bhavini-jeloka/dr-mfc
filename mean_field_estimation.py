@@ -1,8 +1,5 @@
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import matplotlib.pyplot as plt
 import numpy as np
-
+from utils import *
 
 class MeanFieldEstimator():
     def __init__(self, num_states=3, horizon_length=1, num_particles=1000, 
@@ -16,7 +13,7 @@ class MeanFieldEstimator():
         self.T = horizon_length
 
         self.num_particles = num_particles
-        self.G_comms = comms_graph
+        self.G_comms = self.doubly_stochastic_comms_graph(comms_graph)
 
         self.mean_field_estimate = {}
         self.mean_field_estimate_copy = {}
@@ -73,38 +70,39 @@ class MeanFieldEstimator():
                                         fixed_indices[state], fixed_values[state], D=1)
             self.estimate_history[state].append(self.mean_field_estimate[state].copy())
 
-
     def get_new_info(self):
         for i in range(self.num_states):
             self.state_info[i] = []
             for j in range(self.num_states):
-                if self.G_comms[i][j]:  # only based on one-hop neighbor
-                    self.state_info[i].append(self.mean_field_estimate[j])
+                if self.G_comms[i][j]:
+                    self.state_info[i].append(self.mean_field_estimate[j].flatten())
 
     def get_projected_average_estimate(self, fixed_indices, fixed_values):
         for state in range(self.num_states):
             # Start with the initial mean field estimate
-            estimated_mf = self.mean_field_estimate[state]
-
-            # Efficiently sum all info from state_info[state] using np.sum
-            estimated_mf += np.sum(self.state_info[state], axis=0)
-
-            # Average the sum: divide by number of elements in state_info[state] + 1 (the initial estimate)
-            total_elements = len(self.state_info[state]) + 1
-            estimated_mf /= total_elements
+            estimated_mf = self.compute_weighted_average(state)
 
             # Project the result onto the simplex with fixed indices
             self.mean_field_estimate_copy[state] = self.project_to_partial_simplex(
                 estimated_mf, fixed_indices[state], fixed_values[state]
             )
 
+    def compute_weighted_average(self, state):
+        weights = self.G_comms[state]             
+        mask = weights != 0
+        masked_weights = weights[mask]
+        masked_weights /= masked_weights.sum()
+
+        vectors = np.array(self.state_info[state])  
+
+        avg = masked_weights @ vectors             
+        return avg.reshape(1, -1)      
 
     def update_weights(self):
         for state in range(self.num_states):
             for i in range(self.num_particles):
                 for info in self.state_info[state]:
                     self.weights[state][i] *= self._likelihood(info, self.particles[state][i])
-            # Step 3: Normalize
             self.weights[state] /= np.sum(self.weights[state])
 
     def compute_estimate(self, copy=False): 
@@ -149,86 +147,30 @@ class MeanFieldEstimator():
         rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
         theta = (cssv[rho] - z) / (rho + 1)
         return np.maximum(v - theta, 0)
+    
+    def doubly_stochastic_comms_graph(self, adj_matrix):
+        """
+        Computes M = I - (1/d) * L where L = D - A is the unnormalized Laplacian,
+        and d = max degree. Returns a doubly stochastic matrix M.
+        """
+        assert (adj_matrix == adj_matrix.T).all(), "Adjacency matrix must be symmetric (undirected graph)"
+        
+        degrees = np.sum(adj_matrix, axis=1)
+        max_degree = np.max(degrees)
+        d = max_degree
 
-    def plot_estimates(self, true_mean_field=None):
-        fig = plt.figure(figsize=(10, 7))
-        ax = fig.add_subplot(111, projection='3d')
+        # Degree matrix
+        D = np.diag(degrees)
 
-        # Plot each state's mean field trajectory
-        for state in range(self.num_states):
-            history = np.array(self.estimate_history[state])  # shape: (T, 3)
-            ax.scatter(
-                history[:, 0], history[:, 1], history[:, 2],
-                label=f"Estimate: State {state}"
-            )
+        # Laplacian
+        L = D - adj_matrix
 
-        # Plot the true mean-field as a point
-        if true_mean_field is not None:
-            ax.scatter(
-                true_mean_field[0],
-                true_mean_field[1],
-                true_mean_field[2],
-                color='black',
-                s=100,
-                marker='X',
-                label='True Mean Field'
-            )
+        # Compute M = I - (1/d) * L
+        I = np.eye(adj_matrix.shape[0])
+        M = I - (1/d) * L
 
-        # --- Draw the 3D simplex triangle ---
-        vertices = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
-        triangle = Poly3DCollection(
-            [vertices],
-            color='lightgray',
-            alpha=0.2
-        )
-        ax.add_collection3d(triangle)
+        return M
 
-        # Draw the edges of the simplex
-        for i in range(3):
-            for j in range(i + 1, 3):
-                ax.plot(
-                    [vertices[i, 0], vertices[j, 0]],
-                    [vertices[i, 1], vertices[j, 1]],
-                    [vertices[i, 2], vertices[j, 2]],
-                    color='gray',
-                    linewidth=1
-                )
-
-        # Set axes labels and limits
-        ax.set_title("3D Mean-Field Estimates with Simplex")
-        ax.set_xlabel("Component 0")
-        ax.set_ylabel("Component 1")
-        ax.set_zlabel("Component 2")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.set_zlim(0, 1)
-        ax.legend()
-        plt.tight_layout()
-        plt.show()
-
-    def plot_estimation_errors(self, true_mean_field):
-        plt.figure(figsize=(10, 6))
-
-        for state in range(self.num_states):
-            history = np.array(self.estimate_history[state])  # shape: (T, 3)
-            history = np.vstack(history)
-            
-            # Compute L2 norm error between estimate and true mean field at each timestep
-            errors = np.linalg.norm(history - true_mean_field, axis=1)  # shape: (T,)
-
-            plt.plot(errors, label=f"State {state} Error")
-
-        plt.title("Normed Error vs True Mean-Field Over Time")
-        plt.xlabel("Communication Round #")
-        plt.ylabel("L2 Norm Error")
-        plt.grid(True)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
 
 if __name__ == "__main__":
     num_states = 4
@@ -285,4 +227,4 @@ if __name__ == "__main__":
 
     #estimator.compute_estimate()
     #estimator.plot_estimates(true_mean_field)
-    estimator.plot_estimation_errors(true_mean_field)
+    plot_estimation_errors(estimator.estimate_history, true_mean_field, num_states)

@@ -1,5 +1,7 @@
 import numpy as np
 from itertools import product
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import torch
 
@@ -120,4 +122,85 @@ def plot_performance_comparison(test_sample_indices, robust_performance,  nomina
     plt.grid(True)
 
     # Show plot
+    plt.show()
+
+
+def plot_estimates(estimate_history, num_states, true_mean_field=None):
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot each state's mean field trajectory
+        for state in range(num_states):
+            history = np.array(estimate_history[state])  # shape: (T, 3)
+            ax.scatter(
+                history[:, 0], history[:, 1], history[:, 2],
+                label=f"Estimate: State {state}"
+            )
+
+        # Plot the true mean-field as a point
+        if true_mean_field is not None:
+            ax.scatter(
+                true_mean_field[0],
+                true_mean_field[1],
+                true_mean_field[2],
+                color='black',
+                s=100,
+                marker='X',
+                label='True Mean Field'
+            )
+
+        # --- Draw the 3D simplex triangle ---
+        vertices = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        triangle = Poly3DCollection(
+            [vertices],
+            color='lightgray',
+            alpha=0.2
+        )
+        ax.add_collection3d(triangle)
+
+        # Draw the edges of the simplex
+        for i in range(3):
+            for j in range(i + 1, 3):
+                ax.plot(
+                    [vertices[i, 0], vertices[j, 0]],
+                    [vertices[i, 1], vertices[j, 1]],
+                    [vertices[i, 2], vertices[j, 2]],
+                    color='gray',
+                    linewidth=1
+                )
+
+        # Set axes labels and limits
+        ax.set_title("3D Mean-Field Estimates with Simplex")
+        ax.set_xlabel("Component 0")
+        ax.set_ylabel("Component 1")
+        ax.set_zlabel("Component 2")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_zlim(0, 1)
+        ax.legend()
+        plt.tight_layout()
+        plt.show()
+
+def plot_estimation_errors(estimate_history, true_mean_field, num_states):
+    plt.figure(figsize=(10, 6))
+
+    for state in range(num_states):
+        history = np.array(estimate_history[state])  # shape: (T, 3)
+        history = np.vstack(history)
+        
+        # Compute L2 norm error between estimate and true mean field at each timestep
+        errors = np.linalg.norm(history - true_mean_field, axis=1)  # shape: (T,)
+
+        plt.plot(errors, label=f"State {state} Error")
+
+    plt.title("Normed Error vs True Mean-Field Over Time")
+    plt.xlabel("Communication Round #")
+    plt.ylabel("L2 Norm Error")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
     plt.show()
