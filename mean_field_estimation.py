@@ -13,7 +13,7 @@ class MeanFieldEstimator():
         self.T = horizon_length
 
         self.num_particles = num_particles
-        self.G_comms = self.doubly_stochastic_comms_graph(comms_graph)
+        self.G_comms = self.compute_metropolis_weights(comms_graph) 
 
         self.mean_field_estimate = {}
         self.mean_field_estimate_copy = {}
@@ -91,7 +91,7 @@ class MeanFieldEstimator():
         weights = self.G_comms[state]             
         mask = weights != 0
         masked_weights = weights[mask]
-        masked_weights /= masked_weights.sum()
+        #masked_weights /= masked_weights.sum()
 
         vectors = np.array(self.state_info[state])  
 
@@ -147,6 +147,26 @@ class MeanFieldEstimator():
         rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
         theta = (cssv[rho] - z) / (rho + 1)
         return np.maximum(v - theta, 0)
+
+    
+    def compute_metropolis_weights(self, A):
+        # Degree of each node
+        degrees = A.sum(axis=1)
+        
+        # Initialize the Metropolis weight matrix
+        n = A.shape[0]
+        W = np.zeros_like(A, dtype=float)
+        
+        # Compute the Metropolis weights
+        for i in range(n):
+            for j in range(i, n):  # Iterate over the upper triangle to ensure symmetry
+                if A[i, j] == 1:  # There is an edge between node i and j
+                    W[i, j] = 1 / (1 + max(degrees[i], degrees[j]))
+                    W[j, i] = W[i, j]  # Ensure symmetry
+            # Set the diagonal element
+            W[i, i] = 1 - np.sum(W[i, :])  # Normalize the row
+
+        return W
     
     def doubly_stochastic_comms_graph(self, adj_matrix):
         """
