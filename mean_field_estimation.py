@@ -195,7 +195,6 @@ class MeanFieldEstimator():
 if __name__ == "__main__":
     num_states = 4
     num_comm_rounds = 100
-    num_particles = 5000
     num_agents = 500
     true_mean_field = (1/num_agents)*np.array([100, 50, 350, 0])
 
@@ -232,8 +231,7 @@ if __name__ == "__main__":
                     2: [true_mean_field[2]]}
     '''
 
-    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, num_particles=num_particles, 
-                                comms_graph=G_comms, seed=42)
+    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=42)
 
     #estimator.sample_particles(fixed_indices=fixed_indices, fixed_values=fixed_values)
     estimator.initialize_mean_field(fixed_indices=fixed_indices, fixed_values=fixed_values)
