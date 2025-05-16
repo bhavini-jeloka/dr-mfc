@@ -1,5 +1,5 @@
 import numpy as np
-from utils import *
+from .utils import *
 
 class MeanFieldEstimator():
     def __init__(self, num_states=3, horizon_length=1, num_particles=1000, 
