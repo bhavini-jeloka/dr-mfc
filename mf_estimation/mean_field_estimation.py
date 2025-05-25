@@ -190,7 +190,9 @@ class MeanFieldEstimator():
         M = I - (1/d) * L
 
         return M
-
+    
+    def update_comms_graph(self, A):
+        self.G_comms = self.compute_metropolis_weights(A) 
 
 if __name__ == "__main__":
     num_states = 4

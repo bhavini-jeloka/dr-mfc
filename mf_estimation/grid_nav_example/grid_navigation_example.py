@@ -1,15 +1,16 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from .grid_nav_dynamics import GridNavDynamics
+from .grid_nav_dynamics import GridNavDynamicsEval
 from ..mean_field_estimation import MeanFieldEstimator
 from ..utils import *
 
-num_states = 3
-num_actions = 2
+num_states = 9
+num_actions = 5
 num_timesteps = 50
-num_agents = 500
-true_mean_field = (1/num_agents)*np.array([200, 50, 250])
+
+# TODO: define comms graph (time varying)
+true_mean_field = None
 
 # Define communication graph
 G_comms = np.zeros((num_states, num_states))
@@ -27,8 +28,8 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     des_mean_field = true_mean_field.copy()
     
     estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=4)
-    dynamics = MeanFieldDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
-    desired_dynamics = MeanFieldDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
+    dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
+    desired_dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
     
     actual_reward = []
     desired_reward = []
@@ -53,6 +54,9 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         mean_field_estimate = estimator.get_mf_estimate()
         dynamics.compute_next_mean_field(obs=mean_field_estimate)
         mean_field = dynamics.get_mf()
+        
+        new_comms_graph = dynamics.get_new_comms_graph()
+        estimator.update_comms_graph(new_comms_graph)
 
         desired_dynamics.compute_next_mean_field(des_mean_field)
         des_mean_field = desired_dynamics.get_mf()

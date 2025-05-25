@@ -53,6 +53,9 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         mean_field_estimate = estimator.get_mf_estimate()
         dynamics.compute_next_mean_field(obs=mean_field_estimate)
         mean_field = dynamics.get_mf()
+        
+        new_comms_graph = dynamics.get_new_comms_graph()
+        estimator.update_comms_graph(new_comms_graph)
 
         desired_dynamics.compute_next_mean_field(des_mean_field)
         des_mean_field = desired_dynamics.get_mf()
