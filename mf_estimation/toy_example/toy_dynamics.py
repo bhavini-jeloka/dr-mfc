@@ -58,16 +58,16 @@ class MeanFieldDynamicsEval():  # Under known fixed policy (included implicitly 
 
         policy = np.zeros((self.num_actions, self.num_states)) # pi[a][s] = pi(a|s)
         if type(obs)==dict:
-            policy[0][0] = 1 if obs[0][2] > 0.5 else 0
+            policy[0][0] = obs[0][2] #0.5 if obs[0][2] > 0.5 else 0
             policy[1][0] = 1 - policy[0][0] 
-            policy[0][1] = 1 if obs[1][1] < 0.3 else 0
+            policy[0][1] = obs[1][1] #0.5 if obs[1][1] < 0.3 else 0
             policy[1][1] = 1 - policy[0][1]
             policy[0][2] = 1
             policy[1][2] = 0
         else:
-            policy[0][0] = 1 if obs[2] > 0.5 else 0
+            policy[0][0] = obs[2] #0.5 if obs[2] > 0.5 else 0
             policy[1][0] = 1 - policy[0][0] 
-            policy[0][1] = 1 if obs[1] < 0.3 else 0
+            policy[0][1] = obs[1] #0.5 if obs[1] < 0.3 else 0
             policy[1][1] = 1 - policy[0][1]
             policy[0][2] = 1
             policy[1][2] = 0
