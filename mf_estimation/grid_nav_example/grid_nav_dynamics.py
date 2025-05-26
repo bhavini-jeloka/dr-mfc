@@ -1,9 +1,10 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import networkx as nx
 
 class GridNavDynamicsEval():  # Under known fixed policy (included implicitly under transitions)
-    def __init__(self, init_mean_field, num_states, num_actions, policy=None):
+    def __init__(self, init_mean_field, num_states, num_actions, policy=None, init_G_comms=None):
         super().__init__()
 
         self.num_states = num_states
@@ -11,6 +12,7 @@ class GridNavDynamicsEval():  # Under known fixed policy (included implicitly un
         self.num_actions = num_actions
         self.mu = init_mean_field
         self.policy = policy
+        self.init_G_comms = init_G_comms
 
     def transition_dynamics(self, policy):
         transition_matrix = np.zeros((self.num_states, self.num_states))
@@ -121,25 +123,61 @@ class GridNavDynamicsEval():  # Under known fixed policy (included implicitly un
         return self.mu
     
     def get_new_comms_graph(self):
-        #TODO: fix this
-        # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
-        active_indices = [i for i, val in enumerate(self.mu) if val > 0]
+        G_sub, active_nodes = self.reconstruct_connected_subgraph()
+        adj_matrix = np.zeros((self.num_states, self.num_states))
 
-        n_active = len(active_indices)
-        if n_active <= 1:
-            # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
-            return np.zeros((self.num_states, self.num_states), dtype=int)
-
-        # Initialize adjacency matrix
-        adj_matrix = np.zeros((self.num_states, self.num_states), dtype=int)
-
-        # Connect nodes in a simple path: i <-> i+1
-        for i in range(n_active - 1):
-            a, b = active_indices[i], active_indices[i + 1]
-            adj_matrix[a, b] = 1
-            adj_matrix[b, a] = 1
+        # Fill in the subgraph structure at the correct indices
+        for i, u in enumerate(active_nodes):
+            for j, v in enumerate(active_nodes):
+                adj_matrix[u, v] = G_sub[i, j]
 
         return adj_matrix
+    
+    def reconstruct_connected_subgraph(self):
+        # Step 1: Identify active nodes
+        active_nodes = np.where(self.mu > 0)[0]
+        
+        if len(active_nodes) == 1:
+            # Single node is trivially connected
+            return np.array([[0]]), active_nodes
+
+        # Step 2: Induce subgraph
+        G_full = nx.from_numpy_array(self.init_G_comms)
+        G_sub = G_full.subgraph(active_nodes).copy()
+
+        # Step 3: Check if connected
+        if nx.is_connected(G_sub):
+            return nx.to_numpy_array(G_sub, nodelist=active_nodes), active_nodes
+
+        # Step 4: Make connected by adding edges from original G_comms
+        # First, get the connected components
+        components = list(nx.connected_components(G_sub))
+        new_edges = []
+        added = set()
+
+        for i in range(len(components)):
+            for j in range(i + 1, len(components)):
+                min_edge = None
+                min_weight = float('inf')
+                # Find the closest pair of nodes between components i and j
+                for u in components[i]:
+                    for v in components[j]:
+                        if self.init_G_comms[u, v] == 1 and (u, v) not in added and (v, u) not in added:
+                            # Prefer edges in original G_comms
+                            min_edge = (u, v)
+                            break
+                    if min_edge:
+                        break
+                if min_edge:
+                    new_edges.append(min_edge)
+                    added.add(min_edge)
+
+        # Add new edges to G_sub
+        G_sub.add_edges_from(new_edges)
+
+        # Now connected
+        assert nx.is_connected(G_sub)
+        return nx.to_numpy_array(G_sub, nodelist=active_nodes), active_nodes
     
     def get_fixed_policy(self, obs):
         act_dist = np.zeros((self.num_actions, self.num_states))

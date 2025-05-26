@@ -10,8 +10,8 @@ from ..utils import *
 grid_size = 3
 num_states = grid_size**2
 num_actions = 5
-num_timesteps = 10
-num_seeds = 100
+num_timesteps = 30
+num_seeds = 3
 comm_rounds_list = [0, 1, 2, 5]
 
 # Fixed policy
@@ -26,7 +26,18 @@ policy = PolicyNetwork(
 true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.183, 0.134])
 
 # Communication graph (static here)
-G_comms = np.zeros((num_states, num_states))
+# Define communication graph
+G_comms = np.array([[0, 1, 0, 1, 1, 0, 0, 0, 0],
+                    [1, 0, 1, 1, 1, 1, 0, 0, 0], 
+                    [0, 1, 0, 0, 1, 1, 0, 0, 0],
+                    [1, 1, 0, 0, 1, 0, 1, 1, 0],
+                    [1, 1, 1, 1, 0, 1, 1, 1, 1],
+                    [0, 1, 1, 0, 1, 0, 0, 1, 1],
+                    [0, 0, 0, 1, 1, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0, 1],
+                    [0, 0, 0, 0, 1, 1, 0, 1, 0]])
+
+init_G_comms = G_comms.copy()
 
 # Fixed indices
 fixed_indices = {i: [i] for i in range(num_states)}
@@ -44,7 +55,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         des_mean_field = true_mean_field.copy()
 
         estimator = MeanFieldEstimator(num_states, horizon_length=1, comms_graph=G_comms, seed=seed)
-        dynamics = GridNavDynamicsEval(mean_field, num_states, num_actions, policy)
+        dynamics = GridNavDynamicsEval(mean_field, num_states, num_actions, policy, init_G_comms=init_G_comms)
         desired_dynamics = GridNavDynamicsEval(des_mean_field, num_states, num_actions, policy)
 
         for t in range(num_timesteps):

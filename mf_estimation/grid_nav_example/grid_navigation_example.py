@@ -16,7 +16,18 @@ policy = PolicyNetwork(state_dim_actor=(2, grid_size, grid_size), state_dim_crit
 true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.183, 0.134]) #np.random.dirichlet(np.ones(9))
 
 # Define communication graph
-G_comms = np.zeros((num_states, num_states))
+G_comms = np.array([[0, 1, 0, 1, 1, 0, 0, 0, 0],
+                    [1, 0, 1, 1, 1, 1, 0, 0, 0], 
+                    [0, 1, 0, 0, 1, 1, 0, 0, 0],
+                    [1, 1, 0, 0, 1, 0, 1, 1, 0],
+                    [1, 1, 1, 1, 0, 1, 1, 1, 1],
+                    [0, 1, 1, 0, 1, 0, 0, 1, 1],
+                    [0, 0, 0, 1, 1, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0, 1],
+                    [0, 0, 0, 0, 1, 1, 0, 1, 0]])
+
+init_G_comms = G_comms.copy()
+
 
 fixed_indices = {0: [0], 1: [1], 2: [2], 3: [3], 4:[4], 5:[5], 6:[6], 7:[7], 8:[8]}
 comm_rounds_list = [1, 2, 5, 10]  # Values to test
@@ -29,7 +40,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     des_mean_field = true_mean_field.copy()
     
     estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=2)
-    dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy)
+    dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy, init_G_comms=init_G_comms)
     desired_dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy)
     
     actual_reward = []
