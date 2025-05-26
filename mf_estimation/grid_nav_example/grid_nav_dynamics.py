@@ -60,7 +60,7 @@ class GridNavDynamicsEval():  # Under known fixed policy (included implicitly un
         transition_matrix[2, 4] = 0
         transition_matrix[3, 4] = self.pen_prob(self.mu[3])*policy[0][3]
         transition_matrix[4, 4] = policy[4][4] + (1-self.pen_prob(self.mu[4]))*policy[3][4] + (1-self.pen_prob(self.mu[4]))*policy[1][4]
-        transition_matrix[5, 4] = policy[2][5]
+        transition_matrix[5, 4] = self.pen_prob(self.mu[5])*policy[2][5]
         transition_matrix[6, 4] = 0
         transition_matrix[7, 4] = self.pen_prob(self.mu[7])*policy[3][7]
         transition_matrix[8, 4] = 0
