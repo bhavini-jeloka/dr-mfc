@@ -4,6 +4,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import torch
+import os
+from pathlib import Path
 
 def project_rows_onto_simplex(theta, num_states, num_actions):
     """Projects each row of the given tensor onto the probability simplex."""
@@ -228,3 +230,14 @@ def plot_reward(actual_reward, desired_reward):
 
     plt.tight_layout()
     plt.show()
+    
+def get_latest_model_dir(policy_type):
+    base_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+    run_dir = base_dir / policy_type
+    return run_dir
+
+def get_fixed_values(fixed_indices, mean_field):
+    return {
+        key: [mean_field[i] for i in indices]
+        for key, indices in fixed_indices.items()
+    }

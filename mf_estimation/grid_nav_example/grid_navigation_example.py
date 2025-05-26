@@ -2,22 +2,23 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from .grid_nav_dynamics import GridNavDynamicsEval
+from .actor_network import PolicyNetwork
 from ..mean_field_estimation import MeanFieldEstimator
 from ..utils import *
 
-num_states = 9
+grid_size  = 3
+num_states = grid_size**2
 num_actions = 5
 num_timesteps = 50
 
-# TODO: define comms graph (time varying)
-true_mean_field = None
+policy = PolicyNetwork(state_dim_actor=(2, grid_size, grid_size), state_dim_critic=(1, grid_size, grid_size), action_dim=num_actions, policy_type="non_lcp_policy")
+
+true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.183, 0.134]) #np.random.dirichlet(np.ones(9))
 
 # Define communication graph
 G_comms = np.zeros((num_states, num_states))
-G_comms[0][1] = G_comms[1][0] = 1
-G_comms[1][2] = G_comms[2][1] = 1
 
-fixed_indices = {0: [0], 1: [1], 2: [2]}
+fixed_indices = {0: [0], 1: [1], 2: [2], 3: [3], 4:[4], 5:[5], 6:[6], 7:[7], 8:[8]}
 comm_rounds_list = [1, 2, 5, 10]  # Values to test
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8))
@@ -28,21 +29,19 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     des_mean_field = true_mean_field.copy()
     
     estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=4)
-    dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
-    desired_dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
+    dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy)
+    desired_dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy)
     
     actual_reward = []
     desired_reward = []
 
     for t in range(num_timesteps):
+        
+        print("timestep", t)
         actual_reward.append(dynamics.compute_reward())
         desired_reward.append(desired_dynamics.compute_reward())
-
-        fixed_values = {
-            0: [mean_field[0]],
-            1: [mean_field[1]],
-            2: [mean_field[2]]
-        }
+        
+        fixed_values = get_fixed_values(fixed_indices, mean_field)
 
         estimator.initialize_mean_field(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
@@ -55,8 +54,8 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         dynamics.compute_next_mean_field(obs=mean_field_estimate)
         mean_field = dynamics.get_mf()
         
-        new_comms_graph = dynamics.get_new_comms_graph()
-        estimator.update_comms_graph(new_comms_graph)
+        #new_comms_graph = dynamics.get_new_comms_graph()
+        #estimator.update_comms_graph(new_comms_graph)
 
         desired_dynamics.compute_next_mean_field(des_mean_field)
         des_mean_field = desired_dynamics.get_mf()
@@ -73,7 +72,6 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     axs[idx].grid(True)
 
 fig.suptitle("Mean-Field Estimation Performance using LCP Policy", fontsize=16)
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for suptitle
-# Save the figure before displaying it
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])  
 plt.savefig("mean_field_communication_grid_nav.png", dpi=300)
 plt.show()

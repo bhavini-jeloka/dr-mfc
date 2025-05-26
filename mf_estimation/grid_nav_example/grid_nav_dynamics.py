@@ -7,8 +7,10 @@ class GridNavDynamicsEval():  # Under known fixed policy (included implicitly un
         super().__init__()
 
         self.num_states = num_states
+        self.grid = int(np.sqrt(self.num_states))
         self.num_actions = num_actions
         self.mu = init_mean_field
+        self.policy = policy
 
     def transition_dynamics(self, policy):
         transition_matrix = np.zeros((self.num_states, self.num_states))
@@ -140,12 +142,19 @@ class GridNavDynamicsEval():  # Under known fixed policy (included implicitly un
         return adj_matrix
     
     def get_fixed_policy(self, obs):
-        #TODO: fix this to correct the representation!
-        # load policy
-        # reshape the mean-fields
-        # policy per state will be different so compute it like that: 1x5 vector = policy(input=[s][mu_s]) and then combine in order of s
-        # then reorder as [a][s] and stack and return policy
-        # otherwise des-mean-field : full obs
-        policy = None
-        return policy
+        act_dist = np.zeros((self.num_actions, self.num_states))
+
+        # Create one-hot encoded local states (num_states x num_states)
+        est_mf_local_states = np.eye(self.num_states).reshape(self.num_states, self.grid, self.grid)
+
+        if isinstance(obs, dict):
+            est_mf_global_states = np.array([obs[state].reshape(self.grid, self.grid) for state in range(self.num_states)])
+        else:
+            est_mf_global_states = np.tile(obs.reshape(1, self.grid, self.grid), (self.num_states, 1, 1))
+
+        # Stack local and global state into (num_states, 2, grid, grid)
+        concatenated_states = np.stack([est_mf_local_states, est_mf_global_states], axis=1)
+        actions = self.policy.act(concatenated_states)  # Should return (num_states, num_actions)
+        act_dist = actions.cpu().numpy().T  # Transpose to shape (num_actions, num_states)
+        return act_dist
     
