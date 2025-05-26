@@ -51,6 +51,11 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     rewards_desired_all_seeds = np.zeros((num_seeds, num_timesteps))
 
     for seed in range(num_seeds):
+
+        # Create a random generator with the current seed
+        rng = np.random.default_rng(seed)
+        true_mean_field = rng.dirichlet(np.ones(num_states))
+
         mean_field = true_mean_field.copy()
         des_mean_field = true_mean_field.copy()
 
