@@ -72,8 +72,8 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     axs[idx].legend()
     axs[idx].grid(True)
 
-fig.suptitle("Mean-Field Estimation Performance using Metropolis Weights", fontsize=16)
+fig.suptitle("Mean-Field Estimation Performance using LCP Policy", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for suptitle
 # Save the figure before displaying it
-plt.savefig("mean_field_communication_comparison_metropolis_weights.png", dpi=300)
+plt.savefig("mean_field_communication_grid_nav.png", dpi=300)
 plt.show()
