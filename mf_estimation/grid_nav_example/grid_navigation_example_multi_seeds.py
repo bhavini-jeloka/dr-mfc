@@ -19,7 +19,7 @@ policy = PolicyNetwork(
     state_dim_actor=(2, grid_size, grid_size),
     state_dim_critic=(1, grid_size, grid_size),
     action_dim=num_actions,
-    policy_type="non_lcp_policy"
+    policy_type="lcp_policy"
 )
 
 # True mean-field
@@ -78,15 +78,15 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     error_percent = np.abs(np.sum(avg_actual - avg_desired)) / np.abs(np.sum(avg_desired))
 
     # Plot
-    axs[idx].plot(avg_actual, label='Avg Actual')
-    axs[idx].plot(avg_desired, label='Avg Desired', linestyle='dashed')
+    axs[idx].plot(avg_actual, label='Actual Reward')
+    axs[idx].plot(avg_desired, label='Desired Reward', linestyle='dashed')
     axs[idx].set_title(f'Comm Rounds: {num_comm_rounds} | Error: {error_percent:.2%}')
     axs[idx].set_xlabel('Time')
     axs[idx].set_ylabel('Reward')
     axs[idx].legend()
     axs[idx].grid(True)
 
-fig.suptitle("Mean-Field Estimation (Avg over Seeds) - LCP Policy", fontsize=16)
+fig.suptitle("Mean-Field Estimation (averaged over 10 Seeds) - LCP Policy", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.savefig("mean_field_comm_grid_nav_avg_seeds.png", dpi=300)
+plt.savefig("mean_field_comm_grid_nav_lcp.png", dpi=300)
 plt.show()
