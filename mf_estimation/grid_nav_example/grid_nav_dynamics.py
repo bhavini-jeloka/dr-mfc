@@ -149,34 +149,41 @@ class GridNavDynamicsEval():  # Under known fixed policy (included implicitly un
         if nx.is_connected(G_sub):
             return nx.to_numpy_array(G_sub, nodelist=active_nodes), active_nodes
 
-        # Step 4: Make connected by adding edges from original G_comms
-        # First, get the connected components
+        # Step 4: Get components and connect them with fallback logic
         components = list(nx.connected_components(G_sub))
+
         new_edges = []
         added = set()
 
         for i in range(len(components)):
             for j in range(i + 1, len(components)):
                 min_edge = None
-                min_weight = float('inf')
-                # Find the closest pair of nodes between components i and j
+
+                # First try to find an edge in init_G_comms
                 for u in components[i]:
                     for v in components[j]:
                         if self.init_G_comms[u, v] == 1 and (u, v) not in added and (v, u) not in added:
-                            # Prefer edges in original G_comms
                             min_edge = (u, v)
                             break
                     if min_edge:
                         break
-                if min_edge:
+
+                # Fallback if no edge from original graph
+                if not min_edge:
+                    u = next(iter(components[i]))
+                    v = next(iter(components[j]))
+                    min_edge = (u, v)
+
+                if min_edge and (min_edge not in added and (min_edge[1], min_edge[0]) not in added):
                     new_edges.append(min_edge)
                     added.add(min_edge)
 
         # Add new edges to G_sub
         G_sub.add_edges_from(new_edges)
 
-        # Now connected
-        assert nx.is_connected(G_sub)
+        # Ensure graph is now connected
+        assert nx.is_connected(G_sub), "Graph is still not connected after edge augmentation."
+
         return nx.to_numpy_array(G_sub, nodelist=active_nodes), active_nodes
     
     def get_fixed_policy(self, obs):
