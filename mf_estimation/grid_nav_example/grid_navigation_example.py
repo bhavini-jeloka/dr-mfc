@@ -9,9 +9,9 @@ from ..utils import *
 grid_size  = 3
 num_states = grid_size**2
 num_actions = 5
-num_timesteps = 50
+num_timesteps = 10
 
-policy = PolicyNetwork(state_dim_actor=(2, grid_size, grid_size), state_dim_critic=(1, grid_size, grid_size), action_dim=num_actions, policy_type="non_lcp_policy")
+policy = PolicyNetwork(state_dim_actor=(2, grid_size, grid_size), state_dim_critic=(1, grid_size, grid_size), action_dim=num_actions, policy_type="lcp_policy")
 
 true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.183, 0.134]) #np.random.dirichlet(np.ones(9))
 
@@ -28,7 +28,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     mean_field = true_mean_field.copy()
     des_mean_field = true_mean_field.copy()
     
-    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=4)
+    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=2)
     dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy)
     desired_dynamics = GridNavDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions, policy=policy)
     
@@ -54,8 +54,8 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         dynamics.compute_next_mean_field(obs=mean_field_estimate)
         mean_field = dynamics.get_mf()
         
-        #new_comms_graph = dynamics.get_new_comms_graph()
-        #estimator.update_comms_graph(new_comms_graph)
+        new_comms_graph = dynamics.get_new_comms_graph()
+        estimator.update_comms_graph(new_comms_graph)
 
         desired_dynamics.compute_next_mean_field(des_mean_field)
         des_mean_field = desired_dynamics.get_mf()
