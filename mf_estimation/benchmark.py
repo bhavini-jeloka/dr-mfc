@@ -34,9 +34,7 @@ class BenchmarkEstimator():
         for state in range(self.num_states):
             for nbr in range(self.num_states):
                 if self.G_comms[state][nbr]:
-                    unknown_mask = np.isnan(self.mean_field_estimate[state])
-                    known_from_nbr = ~np.isnan(self.mean_field_estimate[nbr])
-                    to_update = unknown_mask & known_from_nbr
+                    to_update = ~np.isnan(self.mean_field_estimate[nbr])
                     updated_estimates[state][to_update] = self.mean_field_estimate[nbr][to_update]
         self.mean_field_estimate = updated_estimates
 
