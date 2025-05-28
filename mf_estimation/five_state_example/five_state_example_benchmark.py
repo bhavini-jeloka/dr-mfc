@@ -19,7 +19,7 @@ G_comms[2][3] = G_comms[3][2] = 1
 G_comms[3][4] = G_comms[4][3] = 1
 
 fixed_indices = {0: [0], 1: [1], 2: [2], 3: [3], 4:[4]}
-comm_rounds_list = [1, 2, 5, 10]  # Values to test
+comm_rounds_list = [0, 1, 5, 10]  # Values to test
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8))
 axs = axs.flatten()

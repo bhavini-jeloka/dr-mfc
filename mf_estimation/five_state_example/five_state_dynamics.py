@@ -72,17 +72,17 @@ class FiveStateDynamicsEval():  # Under known fixed policy (included implicitly 
             policy[0][0] = obs[0].flatten()[4] 
             policy[2][0] = 1 - policy[0][0]
             
-            policy[0][1] = 1 - policy[1][1] - policy[2][1]
             policy[1][1] = obs[1].flatten()[0] 
             policy[2][1] = obs[1].flatten()[2] 
+            policy[0][1] = 1 - policy[1][1] - policy[2][1]
             
-            policy[0][2] = 1 - policy[1][2] - policy[2][2]
             policy[1][2] = obs[2].flatten()[1] 
             policy[2][2] = obs[2].flatten()[3] 
+            policy[0][2] = 1 - policy[1][2] - policy[2][2]
             
-            policy[0][3] = 1 - policy[1][3] - policy[2][3]
             policy[1][3] = obs[3].flatten()[2] 
             policy[2][3] = obs[3].flatten()[4] 
+            policy[0][3] = 1 - policy[1][3] - policy[2][3]
             
             policy[0][4] = obs[4].flatten()[0] 
             policy[1][4] = 1 - policy[0][4] 
@@ -91,19 +91,20 @@ class FiveStateDynamicsEval():  # Under known fixed policy (included implicitly 
             policy[0][0] = obs[4] 
             policy[2][0] = 1 - policy[0][0]
             
-            policy[0][1] = 1 - policy[1][1] - policy[2][1]
             policy[1][1] = obs[0] 
             policy[2][1] = obs[2] 
+            policy[0][1] = 1 - policy[1][1] - policy[2][1]
             
-            policy[0][2] = 1 - policy[1][2] - policy[2][2]
             policy[1][2] = obs[1] 
-            policy[2][2] = obs[3] 
-            
-            policy[0][3] = 1 - policy[1][3] - policy[2][3]
+            policy[2][2] = obs[3]
+            policy[0][2] = 1 - policy[1][2] - policy[2][2]
+             
             policy[1][3] = obs[2] 
-            policy[2][3] = obs[4] 
-            
+            policy[2][3] = obs[4]
+            policy[0][3] = 1 - policy[1][3] - policy[2][3]
+             
             policy[0][4] = obs[0] 
             policy[1][4] = 1 - policy[0][4] 
+            
         return policy
     

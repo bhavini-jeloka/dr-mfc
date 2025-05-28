@@ -7,7 +7,7 @@ from ..utils import *
 
 num_states = 5
 num_actions = 3
-num_timesteps = 50
+num_timesteps = 5
 true_mean_field = np.array([0.1, 0.2, 0.1, 0.3, 0.3])
 
 # Define communication graph
@@ -27,7 +27,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     mean_field = true_mean_field.copy()
     des_mean_field = true_mean_field.copy()
     
-    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=4)
+    estimator = MeanFieldEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms)
     dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
     desired_dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
     
@@ -48,6 +48,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
             estimator.compute_estimate(copy=True)
 
         mean_field_estimate = estimator.get_mf_estimate()
+        
         dynamics.compute_next_mean_field(obs=mean_field_estimate)
         mean_field = dynamics.get_mf()
         
