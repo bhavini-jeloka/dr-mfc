@@ -39,6 +39,8 @@ class FiveStateDynamicsEval():  # Under known fixed policy (included implicitly 
     def compute_next_mean_field(self, obs):
         policy = self.get_fixed_policy(obs)
         self.mu = self.mu@self.transition_dynamics(policy)
+        self.mu[self.mu > 1.0] = 1.0
+        self.mu[self.mu < 0.0] = 0.0
 
     def get_mf(self):
         return self.mu

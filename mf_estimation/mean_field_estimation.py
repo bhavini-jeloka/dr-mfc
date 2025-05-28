@@ -119,7 +119,7 @@ class MeanFieldEstimator():
     def get_mf_estimate(self):
         return self.mean_field_estimate
     
-    def project_to_partial_simplex(self, z, fixed_indices, x_fixed_values):
+    def project_to_partial_simplex(self, z, fixed_indices, x_fixed_values, tol=1e-6):
         z = np.squeeze(z)
         n = len(z)
         x = np.zeros(n)
@@ -132,9 +132,14 @@ class MeanFieldEstimator():
         z_free = z[free_indices]
         rhs = 1.0 - np.sum(x_fixed_values)
 
-        # Project z_free onto simplex of mass = rhs
-        x_free = self.project_onto_simplex(z_free, rhs)
-        x[free_indices] = x_free
+        # If the remaining mass is negligible, assign zeros
+        if rhs < tol:
+            x[free_indices] = 0.0
+        else:
+            # Project z_free onto simplex of mass = rhs
+            x_free = self.project_onto_simplex(z_free, rhs)
+            x[free_indices] = x_free
+
         return x
 
     def project_onto_simplex(self, v, z=1.0):
