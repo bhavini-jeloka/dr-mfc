@@ -78,7 +78,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     avg_actual = rewards_actual_all_seeds.mean(axis=0)
     avg_desired = rewards_desired_all_seeds.mean(axis=0)
     
-    error_percent = np.abs(np.sum(avg_actual - avg_desired)) #/ np.abs(np.sum(avg_desired))
+    error_percent = np.abs(np.sum(avg_actual - avg_desired)) / np.abs(np.sum(avg_desired))
     
     avg_l1_error = l1_errors_all_seeds.mean(axis=0)
     all_l1_errors.append(avg_l1_error)
