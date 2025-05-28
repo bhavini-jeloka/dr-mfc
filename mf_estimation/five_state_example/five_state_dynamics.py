@@ -34,7 +34,7 @@ class FiveStateDynamicsEval():  # Under known fixed policy (included implicitly 
         return transition_matrix  # Shape: (N, num_states, num_states)
 
     def compute_reward(self):
-        return self.mu[0] - self.mu[1]
+        return self.mu[4]
 
     def compute_next_mean_field(self, obs):
         policy = self.get_fixed_policy(obs)

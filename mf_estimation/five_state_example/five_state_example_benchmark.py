@@ -7,9 +7,11 @@ from ..utils import *
 
 num_states = 5
 num_actions = 3
-num_timesteps = 50
-num_agents = 500
-true_mean_field = np.array([0.1, 0.2, 0.1, 0.3, 0.3])
+num_timesteps = 10
+num_seeds = 10
+comm_rounds_list = [1, 2, 5, 10]
+
+true_mean_field = np.array([0.02, 0.47, 0.02, 0.02, 0.47])
 
 # Define communication graph
 G_comms = np.zeros((num_states, num_states))
@@ -18,56 +20,69 @@ G_comms[1][2] = G_comms[2][1] = 1
 G_comms[2][3] = G_comms[3][2] = 1
 G_comms[3][4] = G_comms[4][3] = 1
 
-fixed_indices = {0: [0], 1: [1], 2: [2], 3: [3], 4:[4]}
-comm_rounds_list = [0, 1, 5, 10]  # Values to test
+# Fixed indices
+fixed_indices = {i: [i] for i in range(num_states)}
 
+# Plot setup
 fig, axs = plt.subplots(2, 2, figsize=(12, 8))
 axs = axs.flatten()
 
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
-    mean_field = true_mean_field.copy()
-    des_mean_field = true_mean_field.copy()
-    
-    estimator = BenchmarkEstimator(num_states=num_states, horizon_length=1, comms_graph=G_comms, seed=4)
-    dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
-    desired_dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
-    
-    actual_reward = []
-    desired_reward = []
+    rewards_actual_all_seeds = np.zeros((num_seeds, num_timesteps))
+    rewards_desired_all_seeds = np.zeros((num_seeds, num_timesteps))
 
-    for t in range(num_timesteps):
-        actual_reward.append(dynamics.compute_reward())
-        desired_reward.append(desired_dynamics.compute_reward())
+    for seed in range(num_seeds):
 
-        fixed_values = get_fixed_values(fixed_indices, mean_field)
-        
-        estimator.initialize_estimate(fixed_indices=fixed_indices, fixed_values=fixed_values)
+        # Create a random generator with the current seed
+        rng = np.random.default_rng(seed)
+        true_mean_field = rng.dirichlet(np.ones(num_states))
 
-        for R in range(num_comm_rounds):
-            estimator.get_new_info()
-        estimator.compute_estimate()
+        mean_field = true_mean_field.copy()
+        des_mean_field = true_mean_field.copy()
 
-        mean_field_estimate = estimator.get_mf_estimate()
-        dynamics.compute_next_mean_field(obs=mean_field_estimate)
-        mean_field = dynamics.get_mf()
-        
-        new_comms_graph = dynamics.get_new_comms_graph()
-        estimator.update_comms_graph(new_comms_graph)
+        estimator = BenchmarkEstimator(num_states, horizon_length=1, comms_graph=G_comms, seed=seed)
+        dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
+        desired_dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
 
-        desired_dynamics.compute_next_mean_field(des_mean_field)
-        des_mean_field = desired_dynamics.get_mf()
+        for t in range(num_timesteps):
+            
+            # Rewards
+            rewards_actual_all_seeds[seed, t] = dynamics.compute_reward()
+            rewards_desired_all_seeds[seed, t] = desired_dynamics.compute_reward()
 
-    error_percent = abs(np.sum(np.array(actual_reward) - np.array(desired_reward))) / abs(np.sum(desired_reward))
+            # Mean field estimation
+            fixed_values = get_fixed_values(fixed_indices, mean_field)
+            estimator.initialize_estimate(fixed_indices, fixed_values)
 
-    # Plot results
-    axs[idx].plot(actual_reward, label='Actual Rewards')
-    axs[idx].plot(desired_reward, label='Desired Rewards', linestyle='dashed')
-    axs[idx].set_title(f'Communication Rounds: {num_comm_rounds} | Error: {error_percent:.2%}')
+            for _ in range(num_comm_rounds):
+                estimator.get_new_info()
+            estimator.compute_estimate()
+
+            # Update mean fields
+            mf_estimate = estimator.get_mf_estimate()
+            dynamics.compute_next_mean_field(obs=mf_estimate)
+            mean_field = dynamics.get_mf()
+
+            new_graph = dynamics.get_new_comms_graph()
+            estimator.update_comms_graph(new_graph)
+
+            desired_dynamics.compute_next_mean_field(des_mean_field)
+            des_mean_field = desired_dynamics.get_mf()
+
+    # Average across seeds
+    avg_actual = rewards_actual_all_seeds.mean(axis=0)
+    avg_desired = rewards_desired_all_seeds.mean(axis=0)
+    error_percent = np.abs(np.sum(avg_actual - avg_desired)) / np.abs(np.sum(avg_desired))
+
+    # Plot
+    axs[idx].plot(avg_actual, label='Actual Reward')
+    axs[idx].plot(avg_desired, label='Desired Reward', linestyle='dashed')
+    axs[idx].set_title(f'Comm Rounds: {num_comm_rounds} | Error: {error_percent:.2%}')
     axs[idx].set_xlabel('Time')
     axs[idx].set_ylabel('Reward')
     axs[idx].legend()
     axs[idx].grid(True)
-
+    
 fig.suptitle("Mean-Field Estimation Performance for 5-States", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for suptitle
 # Save the figure before displaying it
