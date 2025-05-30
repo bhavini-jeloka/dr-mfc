@@ -21,6 +21,8 @@ class BenchmarkEstimator():
         self.state_info = {i: [] for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
 
+        self.noise_std = 0.01
+
     def initialize_estimate(self, fixed_indices, fixed_values):
         self.mean_field_estimate = {}
         for state in range(self.num_states):
@@ -28,6 +30,7 @@ class BenchmarkEstimator():
             est[fixed_indices[state]] = fixed_values[state]
             self.mean_field_estimate[state] = est
 
+    '''
     def get_new_info(self):
         updated_estimates = {state: self.mean_field_estimate[state].copy()
                             for state in range(self.num_states)}
@@ -36,6 +39,35 @@ class BenchmarkEstimator():
                 if self.G_comms[state][nbr]:
                     to_update = ~np.isnan(self.mean_field_estimate[nbr])
                     updated_estimates[state][to_update] = self.mean_field_estimate[nbr][to_update]
+        self.mean_field_estimate = updated_estimates
+    '''
+
+    def get_new_info(self):
+        updated_estimates = {state: self.mean_field_estimate[state].copy()
+                            for state in range(self.num_states)}
+
+        for state in range(self.num_states):
+            # Accumulators for averaging noisy values
+            sum_estimates = np.zeros_like(self.mean_field_estimate[state])
+            count_estimates = np.zeros_like(self.mean_field_estimate[state])
+
+            for nbr in range(self.num_states):
+                if self.G_comms[state][nbr]:
+                    neighbor_estimate = self.mean_field_estimate[nbr]
+                    to_update = ~np.isnan(neighbor_estimate)
+
+                    # Add Gaussian noise to neighbor's estimate (communication noise)
+                    noise = np.random.normal(loc=0.0, scale=self.noise_std, size=neighbor_estimate.shape) if nbr != state else 0
+                    noisy_estimate = neighbor_estimate + noise
+
+                    # Accumulate values and count for averaging
+                    sum_estimates[to_update] += noisy_estimate[to_update]
+                    count_estimates[to_update] += 1
+
+            # Average over all neighbors that provided information
+            to_update_final = count_estimates > 0
+            updated_estimates[state][to_update_final] = sum_estimates[to_update_final] / count_estimates[to_update_final]
+
         self.mean_field_estimate = updated_estimates
 
     def compute_estimate(self):
@@ -47,6 +79,8 @@ class BenchmarkEstimator():
                 known_sum = np.nansum(est)
                 remaining_mass = 1.0 - known_sum
                 est[nan_mask] = remaining_mass / num_nans
+            else:
+                est = est/np.sum(est) 
             self.estimate_history[state].append(est.copy())
 
     def get_mf_estimate(self):
@@ -76,7 +110,7 @@ class BenchmarkEstimator():
 
 if __name__ == "__main__":
     num_states = 4
-    num_comm_rounds = 1
+    num_comm_rounds = 2
     num_agents = 500
     true_mean_field = (1/num_agents)*np.array([100, 50, 250, 100])
 

@@ -21,6 +21,7 @@ class MeanFieldEstimator():
         self.state_info = {i: [] for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
 
+        self.noise_std = 0.01
 
     def sample_particles(self, fixed_indices, fixed_values):
         self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
@@ -70,12 +71,27 @@ class MeanFieldEstimator():
                                         fixed_indices[state], fixed_values[state], D=1)
             self.estimate_history[state].append(self.mean_field_estimate[state].copy())
 
+    '''
     def get_new_info(self):
         for i in range(self.num_states):
             self.state_info[i] = []
             for j in range(self.num_states):
                 if self.G_comms[i][j]:
                     self.state_info[i].append(self.mean_field_estimate[j].flatten())
+    '''
+
+    def get_new_info(self):
+        for i in range(self.num_states):
+            self.state_info[i] = []
+            for j in range(self.num_states):
+                if self.G_comms[i][j]:
+                    estimate = self.mean_field_estimate[j].flatten()
+                    
+                    # Add Gaussian noise of appropriate size
+                    noise = np.random.normal(loc=0.0, scale=self.noise_std, size=estimate.shape)
+                    noisy_estimate = estimate + noise
+                    
+                    self.state_info[i].append(noisy_estimate)
 
     def get_projected_average_estimate(self, fixed_indices, fixed_values):
         for state in range(self.num_states):

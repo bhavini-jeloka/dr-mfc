@@ -36,8 +36,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     for seed in range(num_seeds):
 
         # Create a random generator with the current seed
-        rng = np.random.default_rng(seed)
-        true_mean_field = rng.dirichlet(np.ones(num_states))
+        true_mean_field = get_or_create_mean_field(seed, num_states)
 
         mean_field = true_mean_field.copy()
         des_mean_field = true_mean_field.copy()
@@ -95,7 +94,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     axs[idx].legend()
     axs[idx].grid(True)
     
-fig.suptitle("Mean-Field Estimation Performance for 5-States", fontsize=16)
+fig.suptitle("Mean-Field Estimation Performance for 5-States (D-PC)", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for suptitle
 # Save the figure before displaying it
 plt.savefig("mean_field_5_states.png", dpi=300)
@@ -105,7 +104,7 @@ plt.figure(figsize=(8, 6))
 for idx, l1_curve in enumerate(all_l1_errors):
     plt.plot(l1_curve, label=f'Comm Rounds: {comm_rounds_list[idx]}')
 
-plt.title("Average L1 Error Between Estimated and Desired Mean Field")
+plt.title("Average L1 Error Between Estimated and Desired Mean Field (D-PC)")
 plt.xlabel("Time")
 plt.ylabel("L1 Norm Error")
 plt.legend()

@@ -2,6 +2,7 @@
 __pycache__/
 images
 *png
+*csv
 
 *.py[cod]
 *$py.class

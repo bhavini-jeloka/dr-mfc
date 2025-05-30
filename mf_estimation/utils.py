@@ -5,6 +5,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import torch
 import os
+import csv
 from pathlib import Path
 
 def project_rows_onto_simplex(theta, num_states, num_actions):
@@ -241,3 +242,24 @@ def get_fixed_values(fixed_indices, mean_field):
         key: [mean_field[i] for i in indices]
         for key, indices in fixed_indices.items()
     }
+
+def get_or_create_mean_field(seed, num_states, filename="initial_mean_fields.csv"):
+    # If file exists, try to load the mean field for the given seed
+    if os.path.exists(filename):
+        print("file exists")
+        with open(filename, "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if int(row[0]) == seed:
+                    return np.array([float(x) for x in row[1:]])
+
+    # If seed not found, generate new mean field and append it to the file
+    rng = np.random.default_rng(seed)
+    true_mean_field = rng.dirichlet(np.ones(num_states))
+
+    # Create and/or append to the file
+    with open(filename, "a", newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([seed] + true_mean_field.tolist())
+
+    return true_mean_field
