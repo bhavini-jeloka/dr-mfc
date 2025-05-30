@@ -10,8 +10,8 @@ from ..utils import *
 grid_size = 3
 num_states = grid_size**2
 num_actions = 5
-num_timesteps = 1000
-num_seeds = 100
+num_timesteps = 100
+num_seeds = 10
 comm_rounds_list = [0, 1, 2, 5]
 
 # Fixed policy
@@ -55,8 +55,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     for seed in range(num_seeds):
 
         # Create a random generator with the current seed
-        rng = np.random.default_rng(seed)
-        true_mean_field = rng.dirichlet(np.ones(num_states))
+        true_mean_field = true_mean_field = get_or_create_mean_field(seed, num_states, filename="init_grid_mean_fields.csv")
 
         mean_field = true_mean_field.copy()
         des_mean_field = true_mean_field.copy()
@@ -113,19 +112,19 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     axs[idx].legend()
     axs[idx].grid(True)
 
-fig.suptitle("Mean-Field Estimation (averaged over 10 Seeds) - LCP Policy", fontsize=16)
+fig.suptitle("Mean-Field Estimation Grid Navigation (D-PC)", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.savefig("mean_field_comm_grid_nav_lcp.png", dpi=300)
+plt.savefig("mean_field_comm_grid_nav.png", dpi=300)
 plt.show()
 
 plt.figure(figsize=(8, 6))
 for idx, l1_curve in enumerate(all_l1_errors):
     plt.plot(l1_curve, label=f'Comm Rounds: {comm_rounds_list[idx]}')
 
-plt.title("Average L1 Error Between Estimated and Desired Mean Field")
+plt.title("Average L1 Error Between Estimated and Desired Mean Field (D-PC)")
 plt.xlabel("Time")
 plt.ylabel("L1 Norm Error")
 plt.legend()
 plt.grid(True)
-plt.savefig("mean_field_l1_error.png", dpi=300)
+plt.savefig("grid_nav_l1_error.png", dpi=300)
 plt.show()
