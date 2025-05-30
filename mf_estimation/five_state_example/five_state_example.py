@@ -9,7 +9,7 @@ num_states = 5
 num_actions = 3
 num_timesteps = 10
 num_seeds = 10
-comm_rounds_list = [0, 1, 5, 100]
+comm_rounds_list = [1, 2, 5, 10]
 
 true_mean_field = np.array([0.02, 0.47, 0.02, 0.02, 0.47])
 

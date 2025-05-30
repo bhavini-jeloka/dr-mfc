@@ -75,8 +75,11 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     error_percent = np.abs(np.sum(avg_actual - avg_desired)) / np.abs(np.sum(avg_desired))
 
     # Plot
-    axs[idx].plot(avg_actual, label='Actual Reward')
-    axs[idx].plot(avg_desired, label='Desired Reward', linestyle='dashed')
+    cumsum_actual = np.cumsum(avg_actual)
+    cumsum_desired = np.cumsum(avg_desired)
+    axs[idx].plot(cumsum_actual, label='Actual Reward')
+    axs[idx].plot(cumsum_desired, label='Desired Reward', linestyle='dashed')
+    #axs[idx].plot(np.abs(cumsum_actual - cumsum_desired), label='|Cumulative Reward Diff|')
     axs[idx].set_title(f'Comm Rounds: {num_comm_rounds} | Error: {error_percent:.2%}')
     axs[idx].set_xlabel('Time')
     axs[idx].set_ylabel('Reward')
