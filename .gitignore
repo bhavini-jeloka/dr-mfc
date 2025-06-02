@@ -3,6 +3,7 @@ __pycache__/
 images
 *png
 *csv
+*npy
 
 *.py[cod]
 *$py.class

@@ -72,6 +72,10 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
             desired_dynamics.compute_next_mean_field(des_mean_field)
             des_mean_field = desired_dynamics.get_mf()
 
+    np.save(f'rewards_actual_benchmark_all_seeds_{num_comm_rounds}.npy', rewards_actual_all_seeds)
+    np.save(f'rewards_desired_all_seeds_{num_comm_rounds}.npy', rewards_desired_all_seeds)
+    np.save(f'l1_errors_benchmark_all_seeds_{num_comm_rounds}.npy', l1_errors_all_seeds)
+
     # Average across seeds
     avg_actual = rewards_actual_all_seeds.mean(axis=0)
     avg_desired = rewards_desired_all_seeds.mean(axis=0)
