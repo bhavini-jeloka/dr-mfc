@@ -4,6 +4,7 @@ images
 *png
 *csv
 *npy
+data
 
 *.py[cod]
 *$py.class
