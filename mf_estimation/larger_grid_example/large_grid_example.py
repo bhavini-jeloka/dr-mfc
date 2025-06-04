@@ -7,9 +7,12 @@ from ..mean_field_estimation import MeanFieldEstimator
 from ..utils import *
 
 # Parameters
-grid_size = 10
+#TODO: fix comms graph and obstacles+targets
+grid_size = 9
 num_states = grid_size**2
 num_actions = 5
+targets = None
+obstacles = None
 num_timesteps = 1000
 num_seeds = 10
 comm_rounds_list = [0, 1, 2, 5]
@@ -60,10 +63,15 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         mean_field = true_mean_field.copy()
         des_mean_field = true_mean_field.copy()
 
-        estimator = MeanFieldEstimator(num_states, horizon_length=1, comms_graph=G_comms, seed=seed)
-        dynamics = LargeGridNavDynamicsEval(mean_field, num_states, num_actions, policy, init_G_comms=init_G_comms)
-        desired_dynamics = LargeGridNavDynamicsEval(des_mean_field, num_states, num_actions, policy)
-
+        estimator = MeanFieldEstimator(num_states, horizon_length=1, comms_graph=G_comms, 
+                                       seed=seed)
+        
+        dynamics = LargeGridNavDynamicsEval(mean_field, num_states, num_actions,targets=targets,
+                                            obstacles=obstacles, policy=policy, 
+                                            init_G_comms=init_G_comms)
+        desired_dynamics = LargeGridNavDynamicsEval(des_mean_field, num_states, num_actions,
+                                            targets=targets,obstacles=obstacles, policy=policy)
+        
         for t in range(num_timesteps):
             
             l1_errors_all_seeds[seed, t] = np.sum(np.abs(mean_field - des_mean_field))

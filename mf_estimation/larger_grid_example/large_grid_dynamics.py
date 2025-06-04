@@ -4,7 +4,7 @@ import numpy as np
 import networkx as nx
 
 class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicitly under transitions)
-    def __init__(self, init_mean_field, num_states, num_actions, policy=None, init_G_comms=None):
+    def __init__(self, init_mean_field, num_states, num_actions, targets=None, obstacles=None, policy=None, init_G_comms=None):
         super().__init__()
 
         self.num_states = num_states
@@ -14,15 +14,54 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
         self.policy = policy
         self.init_G_comms = init_G_comms
 
+        self._action_to_direction = {
+            0: np.array([0, 1]),
+            1: np.array([1, 0]),
+            2: np.array([0, -1]),
+            3: np.array([-1, 0]),
+            4: np.array([0, 0])
+        }
+
+        # TODO: fix this
+        self.targets = None
+        self.obstacles = None
+
     def transition_dynamics(self, policy):
+
         transition_matrix = np.zeros((self.num_states, self.num_states))
-        #TODO: fix
+        pos_transition_matrix = self._get_pos_transition_matrix()
+
+        for x_prime in range(self.num_states):
+            for x in range(self.num_states):
+                for u in range(self.num_actions):
+                    transition_matrix[x, x_prime] += pos_transition_matrix[x_prime, x, u]*policy[u, x]
         
-        return transition_matrix  # Shape: (N, num_states, num_states)
+        return transition_matrix
+    
+    def _get_pos_transition_matrix(self):
+        pos_transition_matrix = np.zeros((self.num_states, self.num_states, self.num_actions))
+
+        for pos in range(self.num_states):
+            for action in range(len(self._action_to_direction)):
+                next_pos = np.clip(self._index2pos(pos) + self._action_to_direction[action], 0, self.grid - 1)
+                next_pos = self._pos2index(next_pos)
+                if np.isin(next_pos, self.obstacles):
+                    penetrate_prob = min(1, np.exp(10*(self.mu[pos]-0.8)))
+                    pos_transition_matrix[next_pos, pos, action] = penetrate_prob
+                    pos_transition_matrix[pos, pos, action] = 1-penetrate_prob
+                else:
+                    pos_transition_matrix[next_pos, pos, action] = 1
+
+        return pos_transition_matrix
+
+    def _pos2index(self, pos):
+        return np.ravel_multi_index(pos, self.grid)
+    
+    def _index2pos(self, idx):
+        return np.array(np.unravel_index(idx, self.grid))
     
     def compute_reward(self):
-        #TODO: fix
-        return self.mu[0]
+        return np.sum(self.mu[self.targets])
 
     def compute_next_mean_field(self, obs):
         policy = self.get_fixed_policy(obs)
