@@ -30,7 +30,7 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
         pos_transition_matrix = self._get_pos_transition_matrix()
         transition_matrix = np.einsum('xpu,ux->xp', pos_transition_matrix, policy)
 
-        return transition_matrix
+        return transition_matrix.T
     
     def _get_pos_transition_matrix(self):
         pos_transition_matrix = np.copy(self.base_transition_matrix)  # fixed part
@@ -50,25 +50,25 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
 
         positions = np.array([self._index2pos(i) for i in range(S)])
 
-        for action, direction in enumerate(self._action_to_direction):
+        for action in range(self.num_actions):
+            direction = self._action_to_direction[action]
             next_positions = positions + direction
             next_positions = np.clip(next_positions, 0, self.grid - 1)
             next_indices = np.array([self._pos2index(p) for p in next_positions])
 
             for pos in range(S):
                 next_pos = next_indices[pos]
-                if next_pos in self.obstacles:
+                if next_pos in self.obstacles and next_pos!=pos:
                     self.obstacle_mask[pos, action] = True
-                    self.transition_indices.append((next_pos, pos, action))  # store obstacle transitions
-                    # Don't write yet; will be computed later from mu
+                    self.transition_indices.append((next_pos, pos, action)) 
                 else:
                     self.base_transition_matrix[next_pos, pos, action] = 1
 
     def _pos2index(self, pos):
-        return np.ravel_multi_index(pos, self.grid)
+        return np.ravel_multi_index(pos, (self.grid, self.grid))
     
     def _index2pos(self, idx):
-        return np.array(np.unravel_index(idx, self.grid))
+        return np.array(np.unravel_index(idx, (self.grid, self.grid)))
     
     def compute_reward(self):
         return np.sum(self.mu[self.targets])
@@ -162,3 +162,24 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
         act_dist = actions.cpu().numpy().T  # Transpose to shape (num_actions, num_states)
         return act_dist
     
+if __name__ == "__main__":  
+    grid_size = 9
+    num_states = grid_size**2
+    num_actions = 5
+    targets = [[0, 0]]
+    obstacles = [[1, 1]]
+    num_timesteps = 10
+
+    # True mean-field
+    true_mean_field = np.zeros(num_states)
+    true_mean_field[8] = 1
+
+    des_mean_field = true_mean_field.copy()
+    desired_dynamics = LargeGridNavDynamicsEval(des_mean_field, num_states, num_actions,
+                                        targets=targets,obstacles=obstacles, policy=None)
+            
+    for t in range(num_timesteps):
+        print("Time", t)
+        print(des_mean_field.reshape(grid_size, grid_size))
+        desired_dynamics.compute_next_mean_field(des_mean_field)
+        des_mean_field = desired_dynamics.get_mf()
