@@ -7,7 +7,7 @@ from ..utils import *
 
 num_states = 5
 num_actions = 3
-num_timesteps = 10
+num_timesteps = 1000
 num_seeds = 10
 comm_rounds_list = [1, 2, 5, 10]
 
@@ -47,7 +47,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
         for t in range(num_timesteps):
 
-            l1_errors_all_seeds[seed, t] = np.sum(np.abs(mean_field - des_mean_field))
+            l1_errors_all_seeds[seed, t] = 0.5*np.sum(np.abs(mean_field - des_mean_field))
             
             # Rewards
             rewards_actual_all_seeds[seed, t] = dynamics.compute_reward()
