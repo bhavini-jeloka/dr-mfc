@@ -163,7 +163,7 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
         return act_dist
     
 if __name__ == "__main__":  
-    grid_size = 9
+    grid_size = 3
     num_states = grid_size**2
     num_actions = 5
     targets = [[0, 0]]
