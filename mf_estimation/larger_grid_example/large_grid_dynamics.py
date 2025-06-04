@@ -22,9 +22,8 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
             4: np.array([0, 0])
         }
 
-        # TODO: fix this
-        self.targets = None
-        self.obstacles = None
+        self.targets = [self._pos2index(arr) for arr in targets]
+        self.obstacles = [self._pos2index(arr) for arr in obstacles]
 
     def transition_dynamics(self, policy):
 

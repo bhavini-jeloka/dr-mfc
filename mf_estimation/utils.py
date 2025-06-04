@@ -263,3 +263,21 @@ def get_or_create_mean_field(seed, num_states, filename="initial_mean_fields.csv
         writer.writerow([seed] + true_mean_field.tolist())
 
     return true_mean_field
+
+def get_adjacency_matrix(grid_size=9):
+    n_cells = grid_size * grid_size
+    adj_matrix = np.zeros((n_cells, n_cells), dtype=int)
+
+    for row in range(grid_size):
+        for col in range(grid_size):
+            idx = row * grid_size + col
+            # Iterate over 3x3 neighborhood
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    nr, nc = row + dr, col + dc
+                    if 0 <= nr < grid_size and 0 <= nc < grid_size:
+                        n_idx = nr * grid_size + nc
+                        if n_idx != idx:  # exclude self-connection
+                            adj_matrix[idx, n_idx] = 1
+
+    return adj_matrix

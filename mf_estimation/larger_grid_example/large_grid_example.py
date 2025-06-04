@@ -7,12 +7,13 @@ from ..mean_field_estimation import MeanFieldEstimator
 from ..utils import *
 
 # Parameters
-#TODO: fix comms graph and obstacles+targets
 grid_size = 9
 num_states = grid_size**2
 num_actions = 5
-targets = None
-obstacles = None
+targets = np.array([[3, 3], [3, 4], [3, 5], [4, 3], [4, 4], [4, 5], 
+                    [5, 3], [5, 4], [5, 5]])
+obstacles = np.array([[2, 3], [2, 4], [2, 5], [3, 2], [3, 6], [4, 2], [4, 6],
+                    [5, 2], [5, 6], [6, 3], [6, 4], [6, 5]])
 num_timesteps = 1000
 num_seeds = 10
 comm_rounds_list = [0, 1, 2, 5]
@@ -30,15 +31,7 @@ true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.1
 
 # Communication graph (static here)
 # Define communication graph
-G_comms = np.array([[0, 1, 0, 1, 1, 0, 0, 0, 0],
-                    [1, 0, 1, 1, 1, 1, 0, 0, 0], 
-                    [0, 1, 0, 0, 1, 1, 0, 0, 0],
-                    [1, 1, 0, 0, 1, 0, 1, 1, 0],
-                    [1, 1, 1, 1, 0, 1, 1, 1, 1],
-                    [0, 1, 1, 0, 1, 0, 0, 1, 1],
-                    [0, 0, 0, 1, 1, 0, 0, 1, 0],
-                    [0, 0, 0, 1, 1, 1, 1, 0, 1],
-                    [0, 0, 0, 0, 1, 1, 0, 1, 0]])
+G_comms = get_adjacency_matrix(grid_size=grid_size)
 
 init_G_comms = G_comms.copy()
 
