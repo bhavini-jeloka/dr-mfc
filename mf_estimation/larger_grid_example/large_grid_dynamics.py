@@ -24,34 +24,45 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
 
         self.targets = [self._pos2index(arr) for arr in targets]
         self.obstacles = [self._pos2index(arr) for arr in obstacles]
+        self._precompute_fixed_transition_data()
 
     def transition_dynamics(self, policy):
-
-        transition_matrix = np.zeros((self.num_states, self.num_states))
         pos_transition_matrix = self._get_pos_transition_matrix()
+        transition_matrix = np.einsum('xpu,ux->xp', pos_transition_matrix, policy)
 
-        for x_prime in range(self.num_states):
-            for x in range(self.num_states):
-                for u in range(self.num_actions):
-                    transition_matrix[x, x_prime] += pos_transition_matrix[x_prime, x, u]*policy[u, x]
-        
         return transition_matrix
     
     def _get_pos_transition_matrix(self):
-        pos_transition_matrix = np.zeros((self.num_states, self.num_states, self.num_actions))
+        pos_transition_matrix = np.copy(self.base_transition_matrix)  # fixed part
 
-        for pos in range(self.num_states):
-            for action in range(len(self._action_to_direction)):
-                next_pos = np.clip(self._index2pos(pos) + self._action_to_direction[action], 0, self.grid - 1)
-                next_pos = self._pos2index(next_pos)
-                if np.isin(next_pos, self.obstacles):
-                    penetrate_prob = min(1, np.exp(10*(self.mu[pos]-0.8)))
-                    pos_transition_matrix[next_pos, pos, action] = penetrate_prob
-                    pos_transition_matrix[pos, pos, action] = 1-penetrate_prob
-                else:
-                    pos_transition_matrix[next_pos, pos, action] = 1
+        for next_pos, pos, action in self.transition_indices:
+            penetrate_prob = min(1, np.exp(10 * (self.mu[pos] - 0.8)))
+            pos_transition_matrix[next_pos, pos, action] = penetrate_prob
+            pos_transition_matrix[pos, pos, action] = 1 - penetrate_prob
 
         return pos_transition_matrix
+    
+    def _precompute_fixed_transition_data(self):
+        S, A = self.num_states, self.num_actions
+        self.transition_indices = []  # list of (next_pos, pos, action)
+        self.obstacle_mask = np.zeros((S, A), dtype=bool)
+        self.base_transition_matrix = np.zeros((S, S, A))  # will be filled below
+
+        positions = np.array([self._index2pos(i) for i in range(S)])
+
+        for action, direction in enumerate(self._action_to_direction):
+            next_positions = positions + direction
+            next_positions = np.clip(next_positions, 0, self.grid - 1)
+            next_indices = np.array([self._pos2index(p) for p in next_positions])
+
+            for pos in range(S):
+                next_pos = next_indices[pos]
+                if next_pos in self.obstacles:
+                    self.obstacle_mask[pos, action] = True
+                    self.transition_indices.append((next_pos, pos, action))  # store obstacle transitions
+                    # Don't write yet; will be computed later from mu
+                else:
+                    self.base_transition_matrix[next_pos, pos, action] = 1
 
     def _pos2index(self, pos):
         return np.ravel_multi_index(pos, self.grid)
