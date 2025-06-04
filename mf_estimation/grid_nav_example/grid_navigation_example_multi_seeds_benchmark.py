@@ -10,7 +10,7 @@ from ..utils import *
 grid_size = 3
 num_states = grid_size**2
 num_actions = 5
-num_timesteps = 100
+num_timesteps = 1000
 num_seeds = 10
 comm_rounds_list = [0, 1, 2, 5]
 
@@ -91,6 +91,10 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
             desired_dynamics.compute_next_mean_field(des_mean_field)
             des_mean_field = desired_dynamics.get_mf()
 
+    np.save(f'rewards_actual_benchmark_all_seeds_{num_comm_rounds}.npy', rewards_actual_all_seeds)
+    np.save(f'rewards_desired_all_seeds_{num_comm_rounds}.npy', rewards_desired_all_seeds)
+    np.save(f'l1_errors_benchmark_all_seeds_{num_comm_rounds}.npy', l1_errors_all_seeds)
+    
     # Average across seeds
     avg_actual = rewards_actual_all_seeds.mean(axis=0)
     avg_desired = rewards_desired_all_seeds.mean(axis=0)
@@ -113,7 +117,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
 fig.suptitle("Mean-Field Estimation Grid Navigation (Benchmark)", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.savefig("mean_field_comm_grid_nav_benchmark.png", dpi=300)
+#plt.savefig("mean_field_comm_grid_nav_benchmark.png", dpi=300)
 plt.show()
 
 plt.figure(figsize=(8, 6))
@@ -125,5 +129,5 @@ plt.xlabel("Time")
 plt.ylabel("L1 Norm Error")
 plt.legend()
 plt.grid(True)
-plt.savefig("grid_nav_l1_error_benchmark.png", dpi=300)
+#plt.savefig("grid_nav_l1_error_benchmark.png", dpi=300)
 plt.show()

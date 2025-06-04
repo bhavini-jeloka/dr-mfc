@@ -100,7 +100,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 fig.suptitle("Mean-Field Estimation Performance for 5-States (Benchmark Algorithm)", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for suptitle
 # Save the figure before displaying it
-plt.savefig("mean_field_5_states_benchmark.png", dpi=300)
+#plt.savefig("mean_field_5_states_benchmark.png", dpi=300)
 plt.show()
 
 plt.figure(figsize=(8, 6))
@@ -112,5 +112,5 @@ plt.xlabel("Time")
 plt.ylabel("L1 Norm Error")
 plt.legend()
 plt.grid(True)
-plt.savefig("mean_field_l1_error_benchmark.png", dpi=300)
+#plt.savefig("mean_field_l1_error_benchmark.png", dpi=300)
 plt.show()

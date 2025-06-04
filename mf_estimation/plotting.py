@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-comm_rounds_list = [1, 2, 5, 10]
+comm_rounds_list = [0, 1, 2, 5]
 
 # Rewards metric
 fig, axs = plt.subplots(2, 2, figsize=(12, 8))
@@ -41,9 +41,9 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     axs[idx].legend()
     axs[idx].grid(True)
     
-fig.suptitle("Mean-Field Estimation Performance for 5-States", fontsize=16)
+fig.suptitle("Mean-Field Estimation Performance for Grid-Navigation", fontsize=16)
 fig.tight_layout(rect=[0, 0.03, 1, 0.95]) 
-fig.savefig("mean_field_5_states_combined_R2_noise.png", dpi=300)
+fig.savefig("mean_field_grid_nav_noise.png", dpi=300)
 
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
@@ -64,4 +64,4 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
 fig2.suptitle("Average L1 Error Between Estimated and Desired Mean Field")
 fig2.tight_layout(rect=[0, 0.03, 1, 0.95]) 
-fig2.savefig("mean_field_l1_error_combined_R2_noise.png", dpi=300)  
+fig2.savefig("mean_field_l1_error_grid_nav_noise.png", dpi=300)  
