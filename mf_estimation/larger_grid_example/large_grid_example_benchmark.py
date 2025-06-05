@@ -16,7 +16,7 @@ obstacles = [[2, 3], [2, 4], [2, 5], [3, 2], [3, 6], [4, 2], [4, 6],
                     [5, 2], [5, 6], [6, 3], [6, 4], [6, 5]]
 num_timesteps = 500
 num_seeds = 10
-comm_rounds_list = [1, 2, 5, 10]
+comm_rounds_list = [1, 10, 20, 50]
 
 # Fixed policy
 policy = PolicyNetwork(
@@ -31,7 +31,7 @@ true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.1
 
 # Communication graph (static here)
 # Define communication graph
-G_comms = get_adjacency_matrix(grid_size=grid_size)
+G_comms = get_linear_adjacency_matrix(num_states=num_states)
 
 init_G_comms = G_comms.copy()
 
@@ -86,7 +86,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
             dynamics.compute_next_mean_field(obs=mf_estimate)
             mean_field = dynamics.get_mf()
 
-            new_graph = dynamics.get_new_comms_graph()
+            new_graph = dynamics.get_new_comms_graph_linearly()
             estimator.update_comms_graph(new_graph)
 
             desired_dynamics.compute_next_mean_field(des_mean_field)
@@ -96,39 +96,3 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     np.save(f'rewards_desired_all_seeds_{num_comm_rounds}.npy', rewards_desired_all_seeds)
     np.save(f'l1_errors_benchmark_all_seeds_{num_comm_rounds}.npy', l1_errors_all_seeds)
     
-    # Average across seeds
-    avg_actual = rewards_actual_all_seeds.mean(axis=0)
-    avg_desired = rewards_desired_all_seeds.mean(axis=0)
-    error_percent = np.abs(np.sum(avg_actual - avg_desired)) / np.abs(np.sum(avg_desired))
-
-    avg_l1_error = l1_errors_all_seeds.mean(axis=0)
-    all_l1_errors.append(avg_l1_error)
-
-    # Plot
-    cumsum_actual = np.cumsum(avg_actual)
-    cumsum_desired = np.cumsum(avg_desired)
-    axs[idx].plot(cumsum_actual, label='Actual Reward')
-    axs[idx].plot(cumsum_desired, label='Desired Reward', linestyle='dashed')
-    #axs[idx].plot(np.abs(cumsum_actual - cumsum_desired), label='|Cumulative Reward Diff|')
-    axs[idx].set_title(f'Comm Rounds: {num_comm_rounds} | Error: {error_percent:.2%}')
-    axs[idx].set_xlabel('Time')
-    axs[idx].set_ylabel('Reward')
-    axs[idx].legend()
-    axs[idx].grid(True)
-
-fig.suptitle("Mean-Field Estimation Grid Navigation (Benchmark)", fontsize=16)
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-#plt.savefig("mean_field_comm_grid_nav_benchmark.png", dpi=300)
-plt.show()
-
-plt.figure(figsize=(8, 6))
-for idx, l1_curve in enumerate(all_l1_errors):
-    plt.plot(l1_curve, label=f'Comm Rounds: {comm_rounds_list[idx]}')
-
-plt.title("Average L1 Error Between Estimated and Desired Mean Field (Benchmark)")
-plt.xlabel("Time")
-plt.ylabel("L1 Norm Error")
-plt.legend()
-plt.grid(True)
-#plt.savefig("grid_nav_l1_error_benchmark.png", dpi=300)
-plt.show()

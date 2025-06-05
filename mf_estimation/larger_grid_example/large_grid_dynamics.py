@@ -92,6 +92,26 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
 
         return adj_matrix
     
+    def get_new_comms_graph_linearly(self):
+        # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
+        active_indices = [i for i, val in enumerate(self.mu) if val > 0]
+
+        n_active = len(active_indices)
+        if n_active <= 1:
+            # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
+            return np.zeros((self.num_states, self.num_states), dtype=int)
+
+        # Initialize adjacency matrix
+        adj_matrix = np.zeros((self.num_states, self.num_states), dtype=int)
+
+        # Connect nodes in a simple path: i <-> i+1
+        for i in range(n_active - 1):
+            a, b = active_indices[i], active_indices[i + 1]
+            adj_matrix[a, b] = 1
+            adj_matrix[b, a] = 1
+
+        return adj_matrix
+    
     def reconstruct_connected_subgraph(self):
         # Step 1: Identify active nodes
         active_nodes = np.where(self.mu > 0)[0]

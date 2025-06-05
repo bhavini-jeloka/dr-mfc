@@ -281,3 +281,23 @@ def get_adjacency_matrix(grid_size=9):
                             adj_matrix[idx, n_idx] = 1
 
     return adj_matrix
+
+def get_linear_adjacency_matrix(num_states):
+    # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
+    active_indices = np.arange(num_states)
+
+    n_active = len(active_indices)
+    if n_active <= 1:
+        # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
+        return np.zeros((num_states, num_states), dtype=int)
+
+    # Initialize adjacency matrix
+    adj_matrix = np.zeros((num_states, num_states), dtype=int)
+
+    # Connect nodes in a simple path: i <-> i+1
+    for i in range(n_active - 1):
+        a, b = active_indices[i], active_indices[i + 1]
+        adj_matrix[a, b] = 1
+        adj_matrix[b, a] = 1
+
+    return adj_matrix
