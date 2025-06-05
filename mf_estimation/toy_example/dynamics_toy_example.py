@@ -51,8 +51,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
             2: [mean_field[2]]
         }
 
-        if t > 0:
-            estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
+        estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
         for R in range(num_comm_rounds):
             estimator.get_new_info()
