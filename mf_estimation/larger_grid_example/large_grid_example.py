@@ -51,7 +51,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     for seed in range(num_seeds):
 
         # Create a random generator with the current seed
-        true_mean_field = true_mean_field = get_or_create_mean_field(seed, num_states, filename="init_grid_mean_fields.csv")
+        true_mean_field = get_or_create_mean_field(seed, num_states, filename="init_grid_mean_fields.csv")
 
         mean_field = true_mean_field.copy()
         des_mean_field = true_mean_field.copy()
