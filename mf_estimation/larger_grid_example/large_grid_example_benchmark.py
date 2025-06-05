@@ -14,9 +14,9 @@ targets = [[3, 3], [3, 4], [3, 5], [4, 3], [4, 4], [4, 5],
                     [5, 3], [5, 4], [5, 5]]
 obstacles = [[2, 3], [2, 4], [2, 5], [3, 2], [3, 6], [4, 2], [4, 6],
                     [5, 2], [5, 6], [6, 3], [6, 4], [6, 5]]
-num_timesteps = 1000
+num_timesteps = 500
 num_seeds = 10
-comm_rounds_list = [0, 1, 2, 5]
+comm_rounds_list = [1, 2, 5, 10]
 
 # Fixed policy
 policy = PolicyNetwork(
@@ -65,6 +65,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
                                             targets=targets,obstacles=obstacles, policy=policy)
 
         for t in range(num_timesteps):
+            print("Seed:", seed, "Timestep:", t)
 
             l1_errors_all_seeds[seed, t] = np.sum(np.abs(mean_field - des_mean_field))
 
