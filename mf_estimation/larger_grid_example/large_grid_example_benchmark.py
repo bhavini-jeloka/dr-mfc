@@ -23,7 +23,7 @@ policy = PolicyNetwork(
     state_dim_actor=(2, grid_size, grid_size),
     state_dim_critic=(1, grid_size, grid_size),
     action_dim=num_actions,
-    policy_type="lcp_policy"
+    policy_type="lcp_policy_9x9"
 )
 
 # True mean-field
