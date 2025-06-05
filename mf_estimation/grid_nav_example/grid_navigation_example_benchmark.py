@@ -46,6 +46,9 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     actual_reward = []
     desired_reward = []
 
+    fixed_values = get_fixed_values(fixed_indices, mean_field)
+    estimator.initialize_mean_field(fixed_indices, fixed_values)
+
     for t in range(num_timesteps):
         
         print("timestep", t)
@@ -53,8 +56,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         desired_reward.append(desired_dynamics.compute_reward())
         
         fixed_values = get_fixed_values(fixed_indices, mean_field)
-
-        estimator.initialize_estimate(fixed_indices=fixed_indices, fixed_values=fixed_values)
+        estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
         for R in range(num_comm_rounds):
             estimator.get_new_info()

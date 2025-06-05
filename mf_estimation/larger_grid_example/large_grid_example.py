@@ -65,6 +65,9 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         desired_dynamics = LargeGridNavDynamicsEval(des_mean_field, num_states, num_actions,
                                             targets=targets,obstacles=obstacles, policy=policy)
         
+        fixed_values = get_fixed_values(fixed_indices, mean_field)
+        estimator.initialize_mean_field(fixed_indices, fixed_values)
+        
         for t in range(num_timesteps):
             print("Seed:", seed, "Timestep:", t)
             
@@ -76,7 +79,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
             # Mean field estimation
             fixed_values = get_fixed_values(fixed_indices, mean_field)
-            estimator.initialize_mean_field(fixed_indices, fixed_values)
+            estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
             for _ in range(num_comm_rounds):
                 estimator.get_new_info()

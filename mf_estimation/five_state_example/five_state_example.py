@@ -45,6 +45,9 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
         desired_dynamics = FiveStateDynamicsEval(init_mean_field=mean_field, num_states=num_states, num_actions=num_actions)
 
+        fixed_values = get_fixed_values(fixed_indices, mean_field)
+        estimator.initialize_mean_field(fixed_indices, fixed_values)
+        
         for t in range(num_timesteps):
             
             l1_errors_all_seeds[seed, t] = 0.5*np.sum(np.abs(mean_field - des_mean_field))
@@ -55,7 +58,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
             # Mean field estimation
             fixed_values = get_fixed_values(fixed_indices, mean_field)
-            estimator.initialize_mean_field(fixed_indices, fixed_values)
+            estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
             for _ in range(num_comm_rounds):
                 estimator.get_new_info()
