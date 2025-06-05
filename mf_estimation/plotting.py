@@ -4,13 +4,13 @@ import numpy as np
 comm_rounds_list = [1, 2, 5, 10]
 
 # Rewards metric
-fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
 axs = axs.flatten()
 
 plt.subplots_adjust(hspace=0.4)
 
 # L1 metric
-fig2, axs2 = plt.subplots(2, 2, figsize=(12, 8))
+fig2, axs2 = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
 axs2 = axs2.flatten()
 
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
