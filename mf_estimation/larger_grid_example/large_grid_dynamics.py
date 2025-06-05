@@ -28,9 +28,9 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
 
     def transition_dynamics(self, policy):
         pos_transition_matrix = self._get_pos_transition_matrix()
-        transition_matrix = np.einsum('xpu,ux->xp', pos_transition_matrix, policy)
+        transition_matrix = np.einsum('pxu,ux->xp', pos_transition_matrix, policy)
 
-        return transition_matrix.T
+        return transition_matrix
     
     def _get_pos_transition_matrix(self):
         pos_transition_matrix = np.copy(self.base_transition_matrix)  # fixed part
@@ -78,6 +78,7 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
         self.mu = self.mu@self.transition_dynamics(policy)
 
     def get_mf(self):
+        assert np.isclose(np.sum(self.mu), 1.0, atol=1e-6), f"mu does not sum to 1, got {np.sum(self.mu)}"
         return self.mu
     
     def get_new_comms_graph(self):
