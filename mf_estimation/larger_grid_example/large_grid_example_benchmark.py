@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from .large_grid_dynamics import LargeGridNavDynamicsEval
-from .actor_network import PolicyNetwork
+from ..actor_network import PolicyNetwork
 from ..benchmark import BenchmarkEstimator
 from ..utils import *
 

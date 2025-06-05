@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from .grid_nav_dynamics import GridNavDynamicsEval
-from .actor_network import PolicyNetwork
+from ..actor_network import PolicyNetwork
 from ..mean_field_estimation import MeanFieldEstimator
 from ..utils import *
 
@@ -11,7 +11,7 @@ num_states = grid_size**2
 num_actions = 5
 num_timesteps = 10
 
-policy = PolicyNetwork(state_dim_actor=(2, grid_size, grid_size), state_dim_critic=(1, grid_size, grid_size), action_dim=num_actions, policy_type="lcp_policy")
+policy = PolicyNetwork(state_dim_actor=(2, grid_size, grid_size), state_dim_critic=(1, grid_size, grid_size), action_dim=num_actions, policy_type="lcp_policy_3x3")
 
 true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.183, 0.134]) #np.random.dirichlet(np.ones(9))
 

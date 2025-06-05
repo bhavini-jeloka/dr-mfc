@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from .grid_nav_dynamics import GridNavDynamicsEval
-from .actor_network import PolicyNetwork
+from ..actor_network import PolicyNetwork
 from ..benchmark import BenchmarkEstimator
 from ..utils import *
 
@@ -19,7 +19,7 @@ policy = PolicyNetwork(
     state_dim_actor=(2, grid_size, grid_size),
     state_dim_critic=(1, grid_size, grid_size),
     action_dim=num_actions,
-    policy_type="lcp_policy"
+    policy_type="lcp_policy_3x3"
 )
 
 # True mean-field
