@@ -96,7 +96,7 @@ class MeanFieldEstimator():
                     estimate = self.mean_field_estimate[j].flatten()
                     
                     # Add Gaussian noise of appropriate size
-                    noise = np.random.normal(loc=0.0, scale=self.noise_std, size=estimate.shape)
+                    noise = np.random.normal(loc=0.0, scale=self.noise_std, size=estimate.shape) if j != i else 0
                     noisy_estimate = estimate + noise
                     
                     self.state_info[i].append(noisy_estimate)
