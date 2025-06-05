@@ -69,7 +69,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         estimator.initialize_mean_field(fixed_indices, fixed_values)
         
         for t in range(num_timesteps):
-            print("Seed:", seed, "Timestep:", t)
+            print("D-PC", "| Communication round", num_comm_rounds, "| Seed:", seed, "| Timestep:", t)
             
             l1_errors_all_seeds[seed, t] = 0.5*np.sum(np.abs(mean_field - des_mean_field))
             

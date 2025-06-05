@@ -65,7 +65,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
                                             targets=targets,obstacles=obstacles, policy=policy)
 
         for t in range(num_timesteps):
-            print("Seed:", seed, "Timestep:", t)
+            print("Benchmark", "| Communication round", num_comm_rounds, "| Seed:", seed, "| Timestep:", t)
 
             l1_errors_all_seeds[seed, t] = 0.5*np.sum(np.abs(mean_field - des_mean_field))
 
