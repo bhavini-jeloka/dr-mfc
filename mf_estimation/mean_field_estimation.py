@@ -21,7 +21,7 @@ class MeanFieldEstimator():
         self.state_info = {i: [] for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
 
-        self.noise_std = 0.01
+        self.noise_std = 0.0
 
     def sample_particles(self, fixed_indices, fixed_values):
         self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
@@ -70,6 +70,14 @@ class MeanFieldEstimator():
             self.mean_field_estimate[state] = self._sample_constrained_dirichlet(
                                         fixed_indices[state], fixed_values[state], D=1)
             self.estimate_history[state].append(self.mean_field_estimate[state].copy())
+
+    def initialize_comm_round(self, fixed_indices, fixed_values):
+        comm_round_init = {}
+        for state in range(self.num_states):
+            comm_round_init[state] = self.project_to_partial_simplex(
+                self.mean_field_estimate[state], fixed_indices[state], fixed_values[state]
+            )
+        self.mean_field_estimate = comm_round_init
 
     '''
     def get_new_info(self):
