@@ -21,7 +21,7 @@ class BenchmarkEstimator():
         self.state_info = {i: [] for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
 
-        self.noise_std = 0.0
+        self.noise_std = 0.01
 
     def initialize_estimate(self, fixed_indices, fixed_values):
         self.mean_field_estimate = {}
