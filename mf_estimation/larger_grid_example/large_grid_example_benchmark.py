@@ -14,9 +14,9 @@ targets = [[3, 3], [3, 4], [3, 5], [4, 3], [4, 4], [4, 5],
                     [5, 3], [5, 4], [5, 5]]
 obstacles = [[2, 3], [2, 4], [2, 5], [3, 2], [3, 6], [4, 2], [4, 6],
                     [5, 2], [5, 6], [6, 3], [6, 4], [6, 5]]
-num_timesteps = 250
+num_timesteps = 300
 num_seeds = 10
-comm_rounds_list = [10, 20, 30, 40, 50, 60, 70, 80]
+comm_rounds_list = [1, 2, 5, 10]
 
 # Fixed policy
 policy = PolicyNetwork(
@@ -31,7 +31,7 @@ true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.1
 
 # Communication graph (static here)
 # Define communication graph
-G_comms = get_linear_adjacency_matrix(num_states=num_states)
+G_comms = get_adjacency_matrix(grid_size=grid_size)
 
 init_G_comms = G_comms.copy()
 
@@ -86,7 +86,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
             dynamics.compute_next_mean_field(obs=mf_estimate)
             mean_field = dynamics.get_mf()
 
-            new_graph = dynamics.get_new_comms_graph_linearly()
+            new_graph = dynamics.get_new_comms_graph()
             estimator.update_comms_graph(new_graph)
 
             desired_dynamics.compute_next_mean_field(des_mean_field)
