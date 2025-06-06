@@ -14,9 +14,9 @@ targets = [[3, 3], [3, 4], [3, 5], [4, 3], [4, 4], [4, 5],
                     [5, 3], [5, 4], [5, 5]]
 obstacles = [[2, 3], [2, 4], [2, 5], [3, 2], [3, 6], [4, 2], [4, 6],
                     [5, 2], [5, 6], [6, 3], [6, 4], [6, 5]]
-num_timesteps = 500
+num_timesteps = 300
 num_seeds = 10
-comm_rounds_list = [1, 2, 5, 10]
+comm_rounds_list = list(range(1, 11))
 
 # Fixed policy
 policy = PolicyNetwork(
