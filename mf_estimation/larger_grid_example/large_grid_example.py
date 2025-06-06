@@ -31,7 +31,7 @@ true_mean_field = np.array([0.043, 0.127, 0.212, 0.014, 0.092, 0.169, 0.026, 0.1
 
 # Communication graph (static here)
 # Define communication graph
-G_comms = get_adjacency_matrix(num_states=num_states)
+G_comms = get_adjacency_matrix(grid_size=grid_size)
 
 init_G_comms = G_comms.copy()
 
