@@ -4,15 +4,15 @@ import numpy as np
 comm_rounds_list = [1, 2, 5, 10]
 
 # Rewards metric
-fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
-axs = axs.flatten()
+#fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
+#axs = axs.flatten()
 
-plt.subplots_adjust(hspace=0.4)
+#plt.subplots_adjust(hspace=0.4)
 
 # L1 metric
 fig2, axs2 = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
 axs2 = axs2.flatten()
-
+'''
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
     
     rewards_dpc = np.load(f'rewards_actual_dpc_all_seeds_{num_comm_rounds}.npy') 
@@ -44,7 +44,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 fig.suptitle("Mean-Field Estimation Performance for 9x9 Grid-Navigation", fontsize=16)
 fig.tight_layout(rect=[0, 0.03, 1, 0.95]) 
 fig.savefig("mean_field_large_grid_no_noise.png", dpi=300)
-
+'''
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
     l1_dpc = np.load(f'l1_errors_dpc_all_seeds_{num_comm_rounds}.npy')
