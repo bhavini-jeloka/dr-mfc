@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 comm_rounds_list = [10, 20, 30, 40, 50, 60, 70, 80]
-time_steps = [50, 100, 200, 300, 400, 450]
+time_steps = [100, 200, 300, 400, 500, 600, 700, 800, 900, -1]
 
-fig, axs = plt.subplots(2, 3, figsize=(18, 10), sharey=True)
+fig, axs = plt.subplots(2, 5, figsize=(18, 10), sharey=True)
 axs = axs.flatten()
 
 for idx, time_step in enumerate(time_steps):
@@ -27,6 +27,8 @@ for idx, time_step in enumerate(time_steps):
         except FileNotFoundError:
             print(f"Missing file for comm_rounds={num_comm_rounds}, skipping.")
 
+    if time_step == -1:
+        time_step=1000
     axs[idx].plot(valid_comm_rounds, l1_errors_at_t_dpc, marker='o', label='D-PC (Ours)')
     axs[idx].plot(valid_comm_rounds, l1_errors_at_t_benchmark, marker='s', label='Benchmark')
     axs[idx].set_title(f'L1 Error at Time Step {time_step}')
