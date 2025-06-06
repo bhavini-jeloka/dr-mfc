@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 comm_rounds_list = [10, 20, 30, 40, 50, 60, 70, 80]
-time_steps = [0, 50, 100, 150, 200, -1]
+time_steps = [50, 100, 200, 300, 400, 450]
 
 fig, axs = plt.subplots(2, 3, figsize=(18, 10), sharey=True)
 axs = axs.flatten()
