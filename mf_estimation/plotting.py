@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-comm_rounds_list = [1, 10, 20, 50]
+comm_rounds_list = [1, 2, 5, 10]
 
 # Rewards metric
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
