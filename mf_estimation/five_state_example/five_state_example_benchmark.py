@@ -7,11 +7,9 @@ from ..utils import *
 
 num_states = 5
 num_actions = 3
-num_timesteps = 1000
+num_timesteps = 100
 num_seeds = 10
-comm_rounds_list = [1, 2, 5, 10]
-
-true_mean_field = np.array([0.02, 0.47, 0.02, 0.02, 0.47])
+comm_rounds_list = [1, 2, 3, 4]
 
 # Define communication graph
 G_comms = np.zeros((num_states, num_states))
@@ -75,42 +73,3 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     np.save(f'rewards_actual_benchmark_all_seeds_{num_comm_rounds}.npy', rewards_actual_all_seeds)
     np.save(f'rewards_desired_all_seeds_{num_comm_rounds}.npy', rewards_desired_all_seeds)
     np.save(f'l1_errors_benchmark_all_seeds_{num_comm_rounds}.npy', l1_errors_all_seeds)
-
-    # Average across seeds
-    avg_actual = rewards_actual_all_seeds.mean(axis=0)
-    avg_desired = rewards_desired_all_seeds.mean(axis=0)
-
-    error_percent = np.abs(np.sum(avg_actual - avg_desired)) / np.abs(np.sum(avg_desired))
-
-    avg_l1_error = l1_errors_all_seeds.mean(axis=0)
-    all_l1_errors.append(avg_l1_error)
-
-    # Plot
-    cumsum_actual = np.cumsum(avg_actual)
-    cumsum_desired = np.cumsum(avg_desired)
-    axs[idx].plot(cumsum_actual, label='Actual Reward')
-    axs[idx].plot(cumsum_desired, label='Desired Reward', linestyle='dashed')
-    #axs[idx].plot(np.abs(cumsum_actual - cumsum_desired), label='|Cumulative Reward Diff|')
-    axs[idx].set_title(f'Comm Rounds: {num_comm_rounds} | Error: {error_percent:.2%}')
-    axs[idx].set_xlabel('Time')
-    axs[idx].set_ylabel('Reward')
-    axs[idx].legend()
-    axs[idx].grid(True)
-    
-fig.suptitle("Mean-Field Estimation Performance for 5-States (Benchmark Algorithm)", fontsize=16)
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for suptitle
-# Save the figure before displaying it
-#plt.savefig("mean_field_5_states_benchmark.png", dpi=300)
-plt.show()
-
-plt.figure(figsize=(8, 6))
-for idx, l1_curve in enumerate(all_l1_errors):
-    plt.plot(l1_curve, label=f'Comm Rounds: {comm_rounds_list[idx]}')
-
-plt.title("Average L1 Error Between Estimated and Desired Mean Field (Benchmark Algorithm)")
-plt.xlabel("Time")
-plt.ylabel("L1 Norm Error")
-plt.legend()
-plt.grid(True)
-#plt.savefig("mean_field_l1_error_benchmark.png", dpi=300)
-plt.show()
