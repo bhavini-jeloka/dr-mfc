@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-comm_rounds_list = [10, 20, 30, 40, 50, 60, 70, 80]
+comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
 time_steps = [100, 200, 300, 400, 500, 600, 700, 800, 900, -1]
 
-fig, axs = plt.subplots(2, 5, figsize=(18, 10), sharey=True)
+fig, axs = plt.subplots(2, 4, figsize=(18, 10), sharey=True)
 axs = axs.flatten()
 
 for idx, time_step in enumerate(time_steps):
@@ -39,7 +39,7 @@ for idx, time_step in enumerate(time_steps):
 
 fig.suptitle("L1 Error vs Communication Rounds at Different Time Steps", fontsize=18)
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-fig.savefig("linear_l1_error_vs_comm_rounds_no_noise.png", dpi=300)
+fig.savefig("subgrid_l1_error_vs_comm_rounds.png", dpi=300)
 plt.show()
 
 summed_avg_l1_dpc = []
@@ -73,5 +73,5 @@ plt.title("Summed Avg. L1 Error vs Communication Rounds")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("linear_total_l1_error_vs_comm_rounds_no_noise.png", dpi=300)
+plt.savefig("subgrid_total_l1_error_vs_comm_rounds.png", dpi=300)
 plt.show()

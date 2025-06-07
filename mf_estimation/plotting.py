@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-comm_rounds_list = [1, 2, 5, 10]
+comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
 
 # Rewards metric
 #fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
@@ -10,7 +10,7 @@ comm_rounds_list = [1, 2, 5, 10]
 #plt.subplots_adjust(hspace=0.4)
 
 # L1 metric
-fig2, axs2 = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
+fig2, axs2 = plt.subplots(2, 4, figsize=(12, 8), sharey=True)
 axs2 = axs2.flatten()
 '''
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
