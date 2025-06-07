@@ -92,22 +92,22 @@ class FiveStateDynamicsEval():  # Under known fixed policy (included implicitly 
             
         else:
             
-            policy[0][0] = 0.5 if obs[4] > 0.5 else 0.0
+            policy[0][0] = 1 if obs[4] > 0.5 else 0.0
             policy[2][0] = 1 - policy[0][0]
 
             policy[1][1] = 0.5 if obs[0] > 0.3 else 0.0
-            policy[2][1] = 0.5 if obs[2] > 0.7 else 0.0
+            #policy[2][1] = 0.5 if obs[2] > 0.7 else 0.0
             policy[0][1] = 1 - policy[1][1] - policy[2][1]
 
             policy[1][2] = 0.5 if obs[1] > 0.4 else 0.0
-            policy[2][2] = 0.5 if obs[3] > 0.6 else 0.0
+            #policy[2][2] = 0.5 if obs[3] > 0.6 else 0.0
             policy[0][2] = 1 - policy[1][2] - policy[2][2]
 
             policy[1][3] = 0.5 if obs[2] > 0.5 else 0.0
-            policy[2][3] = 0.5 if obs[4] > 0.2 else 0.0
+            #policy[2][3] = 0.5 if obs[4] > 0.2 else 0.0
             policy[0][3] = 1 - policy[1][3] - policy[2][3]
 
-            policy[0][4] = 0.5 if obs[0] > 0.5 else 0.0
+            policy[0][4] = 1 if obs[0] > 0.5 else 0.0
             policy[1][4] = 1 - policy[0][4]
                     
         '''
