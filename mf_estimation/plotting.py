@@ -64,4 +64,4 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
 fig2.suptitle("Average L1 Error Between Estimated and Desired Mean Field")
 fig2.tight_layout(rect=[0, 0.03, 1, 0.95]) 
-fig2.savefig("mean_field_l1_error_large_grid_no_noise.png", dpi=300)  
+fig2.savefig("subgrid_comms_l1_error_vs_time.png", dpi=300)  

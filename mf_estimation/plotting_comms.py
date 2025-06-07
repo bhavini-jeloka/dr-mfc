@@ -4,7 +4,7 @@ import numpy as np
 comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
 time_steps = [100, 200, 300, 400, 500, 600, 700, 800, 900, -1]
 
-fig, axs = plt.subplots(2, 4, figsize=(18, 10), sharey=True)
+fig, axs = plt.subplots(2, 5, figsize=(18, 10), sharey=True)
 axs = axs.flatten()
 
 for idx, time_step in enumerate(time_steps):
