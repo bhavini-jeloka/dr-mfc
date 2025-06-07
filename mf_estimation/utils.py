@@ -193,13 +193,13 @@ def plot_estimation_errors(estimate_history, true_mean_field, num_states):
         history = np.vstack(history)
         
         # Compute L2 norm error between estimate and true mean field at each timestep
-        errors = np.linalg.norm(history - true_mean_field, axis=1)  # shape: (T,)
+        errors = 0.5*np.linalg.norm(history - true_mean_field, ord=1, axis=1) # shape: (T,)
 
         plt.plot(errors, label=f"State {state} Error")
 
-    plt.title("Normed Error vs True Mean-Field Over Time")
-    plt.xlabel("Communication Round #")
-    plt.ylabel("L2 Norm Error")
+    plt.title("Estimated vs True Mean-Field Over Time", fontsize=16)
+    plt.xlabel("Communication Round #", fontsize=16)
+    plt.ylabel("Total Variation Distance", fontsize=16)
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
