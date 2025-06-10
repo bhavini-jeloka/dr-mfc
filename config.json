@@ -28,7 +28,9 @@
     "algorithm": "mf_mappo",
     "episode_length": 10,
     "num_test_episodes": 5,
-    "render_mode": "human"
+    "render_mode": "human",
+
+    "partial_obs": true
     
   }
 

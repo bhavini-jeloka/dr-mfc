@@ -42,7 +42,8 @@ class Runner():
         
         # Call environment 
         self.env = env
-
+        self.partial_obs = config["partial_obs"]
+        
         if "render_mode" in config:
             self.render = 1
             self.frame_delay = 0
@@ -51,7 +52,9 @@ class Runner():
         
         self.init_G_comms = get_adjacency_matrix(grid_size=self.grid[0])
         self.fixed_indices = {i: [i] for i in range(self.num_states)}
-        self.estimator = MeanFieldEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
+
+        if self.partial_obs:
+            self.estimator = MeanFieldEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
         
         # seed
         if self.seed:
@@ -69,8 +72,9 @@ class Runner():
             state, _ = self.env.reset()
             ep_reward = {team:0 for team in self.team_list}
 
-            fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"].transpose(2, 0, 1).flatten())
-            self.estimator.initialize_mean_field(self.fixed_indices, fixed_values)
+            if self.partial_obs:
+                fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"].transpose(2, 0, 1).flatten())
+                self.estimator.initialize_mean_field(self.fixed_indices, fixed_values)
 
             for t in range(self.max_ep_len):
                 print('Timestep:', t)
@@ -79,20 +83,24 @@ class Runner():
                 start_index = 0 
 
                 for i in range(self.num_population):
-                    mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
-                    fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
-                    self.estimator.initialize_comm_round(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
+                    if self.partial_obs:
+                        mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
+                        fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
+                        self.estimator.initialize_comm_round(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
 
-                    new_graph = self.get_new_comms_graph(mean_field)
-                    self.estimator.update_comms_graph(new_graph)
+                        new_graph = self.get_new_comms_graph(mean_field)
+                        self.estimator.update_comms_graph(new_graph)
 
-                    for _ in range(self.num_comm_rounds):
-                        self.estimator.get_new_info()
-                        self.estimator.get_projected_average_estimate(self.fixed_indices, fixed_values)
-                        self.estimator.compute_estimate(copy=True)
+                        for _ in range(self.num_comm_rounds):
+                            self.estimator.get_new_info()
+                            self.estimator.get_projected_average_estimate(self.fixed_indices, fixed_values)
+                            self.estimator.compute_estimate(copy=True)
 
-                    mf_estimate = self.estimator.get_mf_estimate()
-                    action = self.model.get_actions(state, mf_estimate, self.team_list[i], self.num_agent_list[i])
+                        mf_estimate = self.estimator.get_mf_estimate()
+                    else: 
+                        mf_estimate = None
+
+                    action = self.model.get_actions(state, self.team_list[i], self.num_agent_list[i], estimated_mf=mf_estimate)
                     end_index = start_index + self.num_agent_list[i]
                     all_actions[start_index: end_index] = action
                     start_index = end_index

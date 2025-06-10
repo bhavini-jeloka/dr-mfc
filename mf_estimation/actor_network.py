@@ -130,7 +130,7 @@ class PolicyNetwork(nn.Module):
         action_probs = self.actor(state)
         return action_probs.detach()
     
-    def get_actions(self, combined_state, estimated_mf, team_name, num_agent_list):
+    def get_actions(self, combined_state, team_name, num_agent_list, estimated_mf=None):
         # Step 1: Collect local obs and compute indices
         local_obs_list = []
         mf_obs_list = []
@@ -139,10 +139,15 @@ class PolicyNetwork(nn.Module):
         for j in range(num_agent_list):
             key = f"agent_{j}-local-obs"
             local_obs = combined_state[team_name][key]
-            coord = tuple(np.argwhere(local_obs[..., 0])[0])
-            idx = np.ravel_multi_index(coord, self.grid)
+            if estimated_mf is not None:
+                coord = tuple(np.argwhere(local_obs[..., 0])[0])
+                idx = np.ravel_multi_index(coord, self.grid)
+                mean_field_obs = estimated_mf[idx].reshape(1, *self.grid)
+            else:
+                mean_field_obs = combined_state["global-obs"].transpose(2, 0, 1)
+            
             local_obs_list.append(local_obs.transpose(2, 0, 1))
-            mf_obs_list.append(estimated_mf[idx].reshape(1, *self.grid))
+            mf_obs_list.append(mean_field_obs)
         
         # Step 2: Convert to tensors
         local_obs_tensor = torch.tensor(local_obs_list, dtype=torch.float32)       # (N, H, W)

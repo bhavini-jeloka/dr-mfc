@@ -42,9 +42,7 @@ def main(config):
 
     
     # run experiments
-    print("initializating runner")
     runner = Runner(env, config)
-    print("runner initialized!")
     runner.test()
     
 if __name__ == "__main__":
