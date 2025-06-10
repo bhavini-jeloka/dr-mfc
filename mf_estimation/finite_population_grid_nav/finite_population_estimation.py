@@ -67,6 +67,9 @@ class Runner():
         state, _ = self.env.reset()
         ep_reward = {team:0 for team in self.team_list}
 
+        fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"].transpose(2, 0, 1).flatten())
+        self.estimator.initialize_mean_field(self.fixed_indices, fixed_values)
+
         for t in range(self._num_test_timesteps):
             print('Timestep:', t)
            
@@ -74,9 +77,12 @@ class Runner():
             start_index = 0 
 
             for i in range(self.num_population):
-                print(state["global-obs"].shape)
-                fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"])    # only using info from viz graph
+                mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
+                fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
                 self.estimator.initialize_comm_round(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
+
+                new_graph = self.get_new_comms_graph(mean_field)
+                self.estimator.update_comms_graph(new_graph)
 
                 for _ in range(self.num_comm_rounds):
                     self.estimator.get_new_info()
@@ -84,19 +90,17 @@ class Runner():
                     self.estimator.compute_estimate(copy=True)
 
                 mf_estimate = self.estimator.get_mf_estimate()
-                action = self.model.get_actions(state, mf_estimate, self.num_agent_list[i])
+                action = self.model.get_actions(state, mf_estimate, self.team_list[i], self.num_agent_list[i])
                 end_index = start_index + self.num_agent_list[i]
                 all_actions[start_index: end_index] = action
                 start_index = end_index
 
-            state, reward, done, terminated,_ = self.env.step(all_actions.astype(int)) 
-            new_graph = self.get_new_comms_graph()
-            self.estimator.update_comms_graph(new_graph)
+            state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
             
-            for team, rew in reward[0].items():
+            for team, rew in reward.items():
                 ep_reward[team] += rew
             
-            if done[0] or terminated[0]:
+            if done or terminated:
                 for team in self.team_list:
                     test_running_reward[team] += ep_reward[team]
                     print('Reward Team {}: {}'.format(team, round(ep_reward[team], 2)))
@@ -108,8 +112,8 @@ class Runner():
             avg_test_reward = test_running_reward[team] / self.num_test_ep
             print('average test reward team {}: {} '.format(team, str(avg_test_reward)))
     
-    def get_new_comms_graph(self):
-        G_sub, active_nodes = self.reconstruct_connected_subgraph()
+    def get_new_comms_graph(self, mu):
+        G_sub, active_nodes = self.reconstruct_connected_subgraph(mu)
         adj_matrix = np.zeros((self.num_states, self.num_states))
 
         # Fill in the subgraph structure at the correct indices
@@ -119,7 +123,7 @@ class Runner():
 
         return adj_matrix
     
-    def get_new_comms_graph_linearly(self):
+    def get_new_comms_graph_linearly(self, mu):
         # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
         active_indices = [i for i, val in enumerate(self.mu) if val > 0]
 
@@ -139,9 +143,9 @@ class Runner():
 
         return adj_matrix
     
-    def reconstruct_connected_subgraph(self):
+    def reconstruct_connected_subgraph(self, mu):
         # Step 1: Identify active nodes
-        active_nodes = np.where(self.mu > 0)[0]
+        active_nodes = np.where(mu > 0)[0]
         
         if len(active_nodes) == 1:
             # Single node is trivially connected

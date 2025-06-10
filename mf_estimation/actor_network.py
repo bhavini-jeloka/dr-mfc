@@ -130,29 +130,29 @@ class PolicyNetwork(nn.Module):
         action_probs = self.actor(state)
         return action_probs.detach()
     
-def get_actions(self, combined_state, estimated_mf, num_agent_list):
-    # Step 1: Collect local obs and compute indices
-    local_obs_list = []
-    mf_obs_list = []
-    agent_indices = []
+    def get_actions(self, combined_state, estimated_mf, team_name, num_agent_list):
+        # Step 1: Collect local obs and compute indices
+        local_obs_list = []
+        mf_obs_list = []
+        agent_indices = []
 
-    for j in range(num_agent_list):
-        key = f"agent_{j}-local-obs"
-        local_obs = combined_state[key]
-        print(np.nonzero(local_obs))
-        idx = np.ravel_multi_index(np.nonzero(local_obs), self.grid)[0]
-        local_obs_list.append(local_obs)
-        mf_obs_list.append(estimated_mf[idx].reshape(self.grid))
-    
-    # Step 2: Convert to tensors
-    local_obs_tensor = torch.tensor(local_obs_list, dtype=torch.float32)       # (N, H, W)
-    mf_obs_tensor = torch.tensor(mf_obs_list, dtype=torch.float32)             # (N, H, W)
+        for j in range(num_agent_list):
+            key = f"agent_{j}-local-obs"
+            local_obs = combined_state[team_name][key]
+            coord = tuple(np.argwhere(local_obs[..., 0])[0])
+            idx = np.ravel_multi_index(coord, self.grid)
+            local_obs_list.append(local_obs.transpose(2, 0, 1))
+            mf_obs_list.append(estimated_mf[idx].reshape(1, *self.grid))
+        
+        # Step 2: Convert to tensors
+        local_obs_tensor = torch.tensor(local_obs_list, dtype=torch.float32)       # (N, H, W)
+        mf_obs_tensor = torch.tensor(mf_obs_list, dtype=torch.float32)             # (N, H, W)
 
-    # Step 3: Stack along channel dim
-    state_tensor = torch.stack([local_obs_tensor, mf_obs_tensor], dim=1)       # (N, 2, H, W)
+        # Step 3: Stack along channel dim
+        state_tensor = torch.cat([local_obs_tensor, mf_obs_tensor], dim=1)       # (N, 2, H, W)
 
-    # Step 4: Pass through policy and sample actions
-    action_dists = Categorical(self.act(state_tensor))                         # (N, num_actions)
-    actions = action_dists.sample()                                            # (N,)
+        # Step 4: Pass through policy and sample actions
+        action_dists = Categorical(self.act(state_tensor))                         # (N, num_actions)
+        actions = action_dists.sample()                                            # (N,)
 
-    return actions.numpy()
+        return actions.numpy()

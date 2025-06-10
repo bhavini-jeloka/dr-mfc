@@ -28,7 +28,7 @@ def main(config):
                 config["obstacle_locations"][team] = [tuple(loc) for loc in config["obstacle_locations"][team]]
 
     # make environment
-    env=        TimeLimit(AnyPopulationAllAgentDoneWrapper(PopulationRewardWrapper(FlattenObservationWrapper(
+    env =       TimeLimit(AnyPopulationAllAgentDoneWrapper(PopulationRewardWrapper(FlattenObservationWrapper(
                  MultiDiscreteActionWrapper(gym.make(env_name, grid_size=config["size"],
                  num_population=config["num_population"], render_mode = config["render_mode"], num_agent_dict=config["num_agent_map"],
                  population_color_dict=config["population_color_list"],
@@ -42,7 +42,9 @@ def main(config):
 
     
     # run experiments
+    print("initializating runner")
     runner = Runner(env, config)
+    print("runner initialized!")
     runner.test()
     
 if __name__ == "__main__":
