@@ -18,7 +18,6 @@ import networkx as nx
 
 sys.path.append('../mf-env')
 import gym_mf_envs
-import algos
 
 class Runner():
     def __init__(self, env, config, algorithm_config=None, env_config=None):

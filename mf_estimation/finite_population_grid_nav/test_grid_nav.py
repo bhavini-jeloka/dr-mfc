@@ -11,11 +11,10 @@ from gym_mf_envs.wrappers import MultiDiscreteActionWrapper, FlattenObservationW
 from ..actor_network import PolicyNetwork
 
 import numpy as np
-from finite_population_estimation import Runner
+from .finite_population_estimation import Runner
 
 def main(config):
 
-    algo_name = config["algorithm"]
     env_name = config["env_name"]
     config["size"] = tuple(config["size"])
 
