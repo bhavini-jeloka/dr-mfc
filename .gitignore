@@ -3,6 +3,7 @@ __pycache__/
 images
 png
 *csv
+*gif
 data
 
 *.py[cod]
