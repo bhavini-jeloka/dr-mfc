@@ -22,21 +22,11 @@
     "n_targets":{"blue": 1}, 
     "random_targets":{"blue": false},
 
+    "policy_type": "lcp_no_obstacles_3x3",
+    "num_comm_rounds": 1,
+
     "algorithm": "mf_mappo",
     "episode_length": 10,
-    "training_timesteps": 10000,
-    "gamma": 0.99,
-    "beta": 0.01,
-    "num_mini_batches": 2,
-    "eps_clip": 0.3,
-    "epochs": 10,
-    "lr_actor": 0.0005,
-    "lr_critic": 0.001,
-    "update_frequency": 100,
-    "print_frequency": 100,
-    "log_frequency": 500,
-    "save_frequency": 500,
-    "plot_frequency": 100,
     "num_test_episodes": 5,
     "render_mode": "human"
     

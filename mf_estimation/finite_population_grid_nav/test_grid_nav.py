@@ -29,7 +29,7 @@ def main(config):
                 config["obstacle_locations"][team] = [tuple(loc) for loc in config["obstacle_locations"][team]]
 
     # make environment
-    env_fn = lambda: TimeLimit(AnyPopulationAllAgentDoneWrapper(PopulationRewardWrapper(FlattenObservationWrapper(
+    env=        TimeLimit(AnyPopulationAllAgentDoneWrapper(PopulationRewardWrapper(FlattenObservationWrapper(
                  MultiDiscreteActionWrapper(gym.make(env_name, grid_size=config["size"],
                  num_population=config["num_population"], render_mode = config["render_mode"], num_agent_dict=config["num_agent_map"],
                  population_color_dict=config["population_color_list"],
@@ -41,10 +41,9 @@ def main(config):
                  random_init_targets_dict=config["random_targets"],
                  action_map_dict=config["action_map"]))))), max_episode_steps=config["episode_length"])
 
-    envs = gym.vector.AsyncVectorEnv([env_fn] * config["num_parallel_envs"])
     
     # run experiments
-    runner = Runner(envs, config)
+    runner = Runner(env, config)
     runner.test()
     
 if __name__ == "__main__":
