@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from ..actor_network import PolicyNetwork
 from ..mean_field_estimation import MeanFieldEstimator
+from ..benchmark import BenchmarkEstimator
 from ..utils import *
 import importlib
 import sys
@@ -39,6 +40,7 @@ class Runner():
         self.total_num_agents = sum(self.num_agent_list)
 
         self.num_comm_rounds =  config["num_comm_rounds"]
+        self.benchmark = config["benchmark"] if "benchmark" in config else None
         
         # Call environment 
         self.env = env
@@ -55,6 +57,9 @@ class Runner():
 
         if self.partial_obs:
             self.estimator = MeanFieldEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
+
+        if self.partial_obs and self.benchmark is not None:
+            self.estimator = BenchmarkEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
         
         # seed
         if self.seed:
@@ -119,6 +124,69 @@ class Runner():
                     ep_reward = {team:0 for team in self.team_list}
 
                     save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_partial_obs_{self.partial_obs}_comm_{self.num_comm_rounds}"
+                    os.makedirs(save_dir, exist_ok=True)
+                    filename = os.path.join(save_dir, f"ep_{ep}.npy")
+                    np.save(filename, np.array(global_obs_list))
+                    break
+            
+        self.env.close()
+        
+        for team in self.team_list:
+            avg_test_reward = test_running_reward[team] / self.num_test_ep
+            print('average test reward team {}: {} '.format(team, str(avg_test_reward)))
+
+    def test_benchmark(self):
+
+        # track total training time
+        test_running_reward = {team:0 for team in self.team_list}
+
+        for ep in range(self.num_test_ep):
+
+            state, _ = self.env.reset()
+            ep_reward = {team:0 for team in self.team_list}
+            global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+
+            for t in range(self.max_ep_len):
+                print("Benchmark", self.partial_obs, "| Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
+            
+                all_actions = np.zeros(self.total_num_agents, dtype=int)
+                start_index = 0 
+
+                for i in range(self.num_population):
+                    if self.partial_obs:
+                        mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
+                        fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
+                        self.estimator.initialize_estimate(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
+
+                        new_graph = self.get_new_comms_graph(mean_field)
+                        self.estimator.update_comms_graph(new_graph)
+
+                        for _ in range(self.num_comm_rounds):
+                            self.estimator.get_new_info()
+                        self.estimator.compute_estimate()
+
+                        mf_estimate = self.estimator.get_mf_estimate()
+                    else: 
+                        mf_estimate = None
+
+                    action = self.model.get_actions(state, self.team_list[i], self.num_agent_list[i], estimated_mf=mf_estimate)
+                    end_index = start_index + self.num_agent_list[i]
+                    all_actions[start_index: end_index] = action
+                    start_index = end_index
+
+                state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
+                global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+                
+                for team, rew in reward.items():
+                    ep_reward[team] += rew
+                
+                if done or terminated:
+                    for team in self.team_list:
+                        test_running_reward[team] += ep_reward[team]
+                        print('Reward Team {}: {}'.format(team, round(ep_reward[team], 2)))
+                    ep_reward = {team:0 for team in self.team_list}
+
+                    save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_partial_obs_{self.partial_obs}_comm_{self.num_comm_rounds}_benchmark"
                     os.makedirs(save_dir, exist_ok=True)
                     filename = os.path.join(save_dir, f"ep_{ep}.npy")
                     np.save(filename, np.array(global_obs_list))

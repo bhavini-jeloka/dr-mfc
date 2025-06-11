@@ -45,7 +45,13 @@ def main(config):
     
     # run experiments
     runner = Runner(env, config)
-    runner.test()
+
+    if "benchmark" in config:
+        print("running benchmark")
+        runner.test_benchmark()
+    else:
+        print("running d-pc")
+        runner.test()
     
 if __name__ == "__main__":
 
