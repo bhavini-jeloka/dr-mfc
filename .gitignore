@@ -6,7 +6,6 @@ png
 *gif
 data
 reset_initial_info
-mean_field_trajectory
 
 *.py[cod]
 *$py.class
