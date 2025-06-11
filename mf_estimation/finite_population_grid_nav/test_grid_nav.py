@@ -59,17 +59,7 @@ if __name__ == "__main__":
         match = re.search(r"config_(\d+)\.json", path)
         return int(match.group(1)) if match else -1
 
-    # All matching files
-    all_files = glob.glob("configs/config_*.json")
-
-    # Filter files in range 17 to 24
-    filtered_files = [
-        f for f in all_files
-        if (match := re.search(r"config_(\d+)\.json", f)) and 17 <= int(match.group(1)) <= 24
-    ]
-
-    # Sort them numerically
-    config_files = sorted(filtered_files, key=numeric_key)
+    config_files = sorted(glob.glob("configs/config_*.json"), key=numeric_key)
 
     for config_path in config_files:
         print(f"\nLoading config: {config_path}")

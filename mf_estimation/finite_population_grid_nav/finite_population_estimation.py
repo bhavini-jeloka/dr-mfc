@@ -112,7 +112,7 @@ class Runner():
                     start_index = end_index
 
                 state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
-                global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+                global_obs_list.append(state["global-obs"].transpose(2, 0, 1).flatten().copy())
                 
                 for team, rew in reward.items():
                     ep_reward[team] += rew
@@ -175,7 +175,7 @@ class Runner():
                     start_index = end_index
 
                 state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
-                global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+                global_obs_list.append(state["global-obs"].transpose(2, 0, 1).flatten().copy())
                 
                 for team, rew in reward.items():
                     ep_reward[team] += rew
