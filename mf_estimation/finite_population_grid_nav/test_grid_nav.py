@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import json
 import glob
+import re
 sys.path.append('../mf-env')
 
 import gymnasium as gym
@@ -47,8 +48,12 @@ def main(config):
     runner.test()
     
 if __name__ == "__main__":
-    # Change the path or pattern as needed
-    config_files = sorted(glob.glob("configs/config_*.json"))
+
+    def numeric_key(path):
+        match = re.search(r"config_(\d+)\.json", path)
+        return int(match.group(1)) if match else -1
+
+    config_files = sorted(glob.glob("configs/config_*.json"), key=numeric_key)
 
     for config_path in config_files:
         print(f"\nLoading config: {config_path}")
