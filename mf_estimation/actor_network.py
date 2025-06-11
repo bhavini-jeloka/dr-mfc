@@ -160,4 +160,4 @@ class PolicyNetwork(nn.Module):
         action_dists = Categorical(self.act(state_tensor))                         # (N, num_actions)
         actions = action_dists.sample()                                            # (N,)
 
-        return actions.numpy()
+        return actions.cpu().numpy()
