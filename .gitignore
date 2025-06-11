@@ -5,6 +5,7 @@ png
 *csv
 *gif
 data
+reset_initial_info
 
 *.py[cod]
 *$py.class
