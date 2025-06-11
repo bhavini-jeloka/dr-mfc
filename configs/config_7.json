@@ -25,12 +25,12 @@
     "random_targets":{"blue": false},
 
     "policy_type": "lcp_policy_9x9",
-    "num_comm_rounds": 10,
+    "num_comm_rounds": 7,
 
     "algorithm": "mf_mappo",
     "episode_length": 500,
-    "num_test_episodes": 5,
-    "render_mode": "human",
+    "num_test_episodes": 100,
+    "render_mode": "rgb_array",
 
     "partial_obs": true
     

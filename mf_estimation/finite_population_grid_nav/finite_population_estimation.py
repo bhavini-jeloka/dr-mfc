@@ -78,7 +78,7 @@ class Runner():
                 self.estimator.initialize_mean_field(self.fixed_indices, fixed_values)
 
             for t in range(self.max_ep_len):
-                print('Timestep:', t)
+                print("Partial obs", self.partial_obs, "| Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
             
                 all_actions = np.zeros(self.total_num_agents, dtype=int)
                 start_index = 0 

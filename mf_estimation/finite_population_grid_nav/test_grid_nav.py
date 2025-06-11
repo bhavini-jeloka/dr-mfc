@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import sys
 import json
+import glob
 sys.path.append('../mf-env')
 
 import gymnasium as gym
@@ -46,6 +47,11 @@ def main(config):
     runner.test()
     
 if __name__ == "__main__":
-    with open("config.json", "r") as jsonfile:
-        config = json.load(jsonfile)
-    main(config)
+    # Change the path or pattern as needed
+    config_files = sorted(glob.glob("configs/config_*.json"))
+
+    for config_path in config_files:
+        print(f"\nLoading config: {config_path}")
+        with open(config_path, "r") as jsonfile:
+            config = json.load(jsonfile)
+        main(config)
