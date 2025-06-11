@@ -70,3 +70,9 @@ if __name__ == "__main__":
 
     # Sort them numerically
     config_files = sorted(filtered_files, key=numeric_key)
+
+    for config_path in config_files:
+        print(f"\nLoading config: {config_path}")
+        with open(config_path, "r") as jsonfile:
+            config = json.load(jsonfile)
+        main(config)
