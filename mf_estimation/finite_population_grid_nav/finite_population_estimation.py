@@ -71,6 +71,7 @@ class Runner():
 
             state, _ = self.env.reset()
             ep_reward = {team:0 for team in self.team_list}
+            global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
 
             if self.partial_obs:
                 fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"].transpose(2, 0, 1).flatten())
@@ -106,6 +107,7 @@ class Runner():
                     start_index = end_index
 
                 state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
+                global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
                 
                 for team, rew in reward.items():
                     ep_reward[team] += rew
@@ -115,6 +117,11 @@ class Runner():
                         test_running_reward[team] += ep_reward[team]
                         print('Reward Team {}: {}'.format(team, round(ep_reward[team], 2)))
                     ep_reward = {team:0 for team in self.team_list}
+
+                    save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_partial_obs_{self.partial_obs}_comm_{self.num_comm_rounds}"
+                    os.makedirs(save_dir, exist_ok=True)
+                    filename = os.path.join(save_dir, f"ep_{ep}.npy")
+                    np.save(filename, np.array(global_obs_list))
                     break
             
         self.env.close()
