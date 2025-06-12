@@ -1,7 +1,3 @@
-# Use test file and for mf-mappo, use the network we have instead and restructure code
-# Begin with no obstacles and basic nav under LCP and see videos and then add obstacles
-# Add estimator as a separate plug-in module while cleaning code - maybe remove num env
-
 import numpy as np
 import torch
 from ..actor_network import PolicyNetwork
@@ -40,27 +36,28 @@ class Runner():
         self.total_num_agents = sum(self.num_agent_list)
 
         self.num_comm_rounds =  config["num_comm_rounds"]
-        self.benchmark = config["benchmark"] if "benchmark" in config else None
+        self.estimation_module = config["estimation_module"]
         
         # Call environment 
         self.env = env
-        self.partial_obs = config["partial_obs"]
         
         if "render_mode" in config:
             self.render = 1
             self.frame_delay = 0
 
-        self.model = PolicyNetwork(self.grid, state_dim_actor=(2, *self.grid), state_dim_critic=(1, *self.grid), action_dim=self.action_dim, policy_type=config["policy_type"])
-        
+        self.model = []
+        self.estimator = {team: None for team in self.team_list}
+
         self.init_G_comms = get_adjacency_matrix(grid_size=self.grid[0])
         self.fixed_indices = {i: [i] for i in range(self.num_states)}
 
-        if self.partial_obs:
-            self.estimator = MeanFieldEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
+        for i in range(self.num_population): # TODO: fix these inputs also
+            self.model[i] = PolicyNetwork(self.grid, state_dim_actor=(2, *self.grid), state_dim_critic=(1, *self.grid), action_dim=self.action_dim, policy_type=config["policy_type"])
+            if self.estimation_module[i] == "benchmark":
+                self.estimator[i] = BenchmarkEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
+            if self.estimation_module[i] == "d-pc":
+                self.estimator[i] = MeanFieldEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
 
-        if self.partial_obs and self.benchmark is not None:
-            self.estimator = BenchmarkEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
-        
         # seed
         if self.seed:
             torch.manual_seed(self.seed)
@@ -78,12 +75,14 @@ class Runner():
             ep_reward = {team:0 for team in self.team_list}
             global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
 
+            #TODO: continue here
+
             if self.partial_obs:
                 fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"].transpose(2, 0, 1).flatten())
                 self.estimator.initialize_mean_field(self.fixed_indices, fixed_values)
 
             for t in range(self.max_ep_len):
-                print("Partial obs", self.partial_obs, "| Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
+                print("Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
             
                 all_actions = np.zeros(self.total_num_agents, dtype=int)
                 start_index = 0 
@@ -105,8 +104,8 @@ class Runner():
                         mf_estimate = self.estimator.get_mf_estimate()
                     else: 
                         mf_estimate = None
-
-                    action = self.model.get_actions(state, self.team_list[i], self.num_agent_list[i], estimated_mf=mf_estimate)
+                #TODO: After this all good
+                    action = self.model[i].get_actions(state, self.team_list[i], self.num_agent_list[i], estimated_mf=mf_estimate[i])
                     end_index = start_index + self.num_agent_list[i]
                     all_actions[start_index: end_index] = action
                     start_index = end_index
@@ -123,7 +122,8 @@ class Runner():
                         print('Reward Team {}: {}'.format(team, round(ep_reward[team], 2)))
                     ep_reward = {team:0 for team in self.team_list}
 
-                    save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_partial_obs_{self.partial_obs}_comm_{self.num_comm_rounds}"
+                    est_module_str = "_".join([f"{team}-{name}" for team, name in self.estimation_module.items()])
+                    save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_comm_{self.num_comm_rounds}_{est_module_str}"
                     os.makedirs(save_dir, exist_ok=True)
                     filename = os.path.join(save_dir, f"ep_{ep}.npy")
                     np.save(filename, np.array(global_obs_list))

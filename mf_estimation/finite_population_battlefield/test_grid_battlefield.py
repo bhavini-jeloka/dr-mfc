@@ -45,13 +45,7 @@ def main(config):
     
     # run experiments
     runner = Runner(env, config)
-
-    if "benchmark" in config:
-        print("running benchmark")
-        runner.test_benchmark()
-    else:
-        print("running d-pc")
-        runner.test()
+    runner.test()   # estimation technique in config: {"blue": "d-pc", "red": null}
     
 if __name__ == "__main__":
 

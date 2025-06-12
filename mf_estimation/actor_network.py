@@ -120,7 +120,7 @@ class PolicyNetwork(nn.Module):
         self.grid = grid
         self.actor = ActorNetwork(state_dim_actor, action_dim).to(device)
         self.critic = CriticNetwork(state_dim_critic, 1).to(device)
-        
+        #TODO: make this more general
         model_dir = get_latest_model_dir(policy_type)
         self.load_state_dict(torch.load(model_dir / 'model.pth', map_location=lambda storage, loc: storage))
     
