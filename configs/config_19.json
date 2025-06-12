@@ -29,7 +29,7 @@
 
     "algorithm": "mf_mappo",
     "episode_length": 500,
-    "num_test_episodes": 100,
+    "num_test_episodes": 10,
     "render_mode": "rgb_array",
 
     "partial_obs": true, 
