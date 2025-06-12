@@ -11,7 +11,7 @@ def pad_array(arr, target_length, num_states, pad_value=0.0): # Or np.nan
     return np.vstack((arr, padding))
 
 comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
-num_episodes = 100
+num_episodes = 10
 num_timesteps = 501
 grid = (9, 9)
 
