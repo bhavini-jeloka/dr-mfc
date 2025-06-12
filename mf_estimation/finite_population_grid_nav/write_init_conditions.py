@@ -59,6 +59,6 @@ def main(config):
                             f"Location: {agent_location}, Alive: {agent_alive}\n")
         
 if __name__ == "__main__":
-    with open("config.json", "r") as jsonfile:
+    with open("main_config.json", "r") as jsonfile:
         config = json.load(jsonfile)
     main(config)
