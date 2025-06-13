@@ -29,6 +29,10 @@ class MeanFieldEstimator():
 
         self.noise_std = 0.0
 
+        self._gurobi_model = None
+        self._gurobi_x = None
+        self._gurobi_rhs_constr = None
+
     def sample_particles(self, fixed_indices, fixed_values):
         self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
         self.particles = np.zeros((self.num_states, self.num_particles, self.num_states))
@@ -167,10 +171,65 @@ class MeanFieldEstimator():
             x[free_indices] = 0.0
         else:
             # Project z_free onto simplex of mass = rhs
-            x_free = self.gurobi_l1_projection(z_free, rhs)#self.project_onto_simplex(z_free, rhs)
+            x_free = self.gurobi_l1_projection_reuse(z_free, rhs)
             x[free_indices] = x_free
 
         return x
+
+    def build_gurobi_l1_projection_model(self, n):
+        """
+        Build and cache a reusable Gurobi model for L1 projection.
+        This should be called once with a fixed `n` (length of z).
+        """
+        model = gp.Model()
+        model.setParam('OutputFlag', 0)  # Changed to 1 to enable Gurobi output for debugging
+
+        x = model.addMVar(n, lb=0, name="x")
+        t = model.addMVar(n, lb=0, name="t")
+
+        model.setObjective(0.5 * t.sum(), GRB.MINIMIZE)
+        
+        abs_constr_pos = model.addConstr(t - x >= 0.0, name="abs_constr_pos")
+        abs_constr_neg = model.addConstr(t + x >= 0.0, name="abs_constr_neg")
+
+        # Sum constraint for x: sum(x_i) == rhs
+        rhs_constr = model.addConstr(x.sum() == 1.0, name="sum_constraint")
+
+        model.update() # Apply changes to the model
+
+        # Store Gurobi model components for later reuse
+        self._gurobi_model = model
+        self._gurobi_x = x
+        self._gurobi_rhs_constr = rhs_constr
+        self._gurobi_abs_constr_pos = abs_constr_pos
+        self._gurobi_abs_constr_neg = abs_constr_neg
+
+    def gurobi_l1_projection_reuse(self, z_target, rhs, tol=1e-9):
+        """
+        Use prebuilt Gurobi model to solve min 0.5*||x - z||_1 s.t. sum x = rhs, x >= 0
+        """
+        z_target = np.squeeze(z_target) # Ensure z_target is a 1D array
+        n = len(z_target)
+
+        # Rebuild model if it's not initialized or if 'n' has changed
+        if self._gurobi_model is None or self._gurobi_x.shape[0] != n:
+            self.build_gurobi_l1_projection_model(n)
+
+        # Update the z parameter
+        self._gurobi_abs_constr_pos.setAttr('RHS', -z_target)
+        self._gurobi_abs_constr_neg.setAttr('RHS', z_target)
+
+        # Update the right-hand side of the sum constraint
+        self._gurobi_rhs_constr.rhs = rhs
+
+        self._gurobi_model.update()
+        self._gurobi_model.reset()
+        self._gurobi_model.optimize()
+        
+        return self._gurobi_x.X # Return the optimal solution for x
+        
+    
+    '''
 
     def project_onto_simplex(self, z, rhs, tol=1e-6):
         """
@@ -198,7 +257,7 @@ class MeanFieldEstimator():
             raise ValueError("Projection failed or problem is infeasible.")
 
         return x.value
-    
+
     def gurobi_l1_projection(self, z, rhs):
         """
         Solves: min_x 0.5 * ||x - z||_1 s.t. sum x = rhs, x >= 0
@@ -230,8 +289,8 @@ class MeanFieldEstimator():
             raise ValueError("Gurobi projection failed.")
 
         return x.X  # already a NumPy array
-
-    '''
+    
+    
     def project_onto_simplex(self, v, z=1.0):
         """Projects vector v onto the simplex {x : x >= 0, sum x = z}"""
         v = np.asarray(v)
@@ -242,7 +301,6 @@ class MeanFieldEstimator():
         rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
         theta = (cssv[rho] - z) / (rho + 1)
         return np.maximum(v - theta, 0)
-        '''
     
     def l1_projection_mirror_descent(self, z, rhs, num_iters=100, lr=0.01):
         z = torch.tensor(z, dtype=torch.float32, device=self.device)
@@ -261,6 +319,7 @@ class MeanFieldEstimator():
             x = torch.clamp(x, min=0)
 
         return x.cpu().numpy()
+    '''
     
     def compute_metropolis_weights(self, A):
         # Degree of each node
