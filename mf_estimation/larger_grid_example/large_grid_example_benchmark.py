@@ -20,6 +20,7 @@ comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
 
 # Fixed policy
 policy = PolicyNetwork(
+    grid=(grid_size, grid_size), 
     state_dim_actor=(2, grid_size, grid_size),
     state_dim_critic=(1, grid_size, grid_size),
     action_dim=num_actions,

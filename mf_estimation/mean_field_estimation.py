@@ -1,4 +1,5 @@
 import numpy as np
+import cvxpy as cp
 from .utils import *
 
 class MeanFieldEstimator():
@@ -166,6 +167,34 @@ class MeanFieldEstimator():
 
         return x
 
+    def project_onto_simplex(self, z, rhs, tol=1e-6):
+        """
+        Projects z onto the simplex {x >= 0, sum x = rhs}, minimizing L1 distance.
+        That is: argmin_x 0.5 * ||x - z||_1 subject to sum x = rhs, x >= 0
+        """
+        z = np.squeeze(z)
+        n = len(z)
+        x = cp.Variable(n)
+        t = cp.Variable(n)
+
+        objective = cp.Minimize(0.5 * cp.sum(t))
+        constraints = [
+            t >= x - z,
+            t >= z - x,
+            cp.sum(x) == rhs,
+            x >= 0,
+            t >= 0
+        ]
+
+        prob = cp.Problem(objective, constraints)
+        prob.solve()
+
+        if prob.status != cp.OPTIMAL:
+            raise ValueError("Projection failed or problem is infeasible.")
+
+        return x.value
+
+    '''
     def project_onto_simplex(self, v, z=1.0):
         """Projects vector v onto the simplex {x : x >= 0, sum x = z}"""
         v = np.asarray(v)
@@ -176,7 +205,7 @@ class MeanFieldEstimator():
         rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
         theta = (cssv[rho] - z) / (rho + 1)
         return np.maximum(v - theta, 0)
-
+        '''
     
     def compute_metropolis_weights(self, A):
         # Degree of each node
@@ -227,7 +256,7 @@ if __name__ == "__main__":
     num_states = 4
     num_comm_rounds = 100
     num_agents = 500
-    true_mean_field = (1/num_agents)*np.array([100, 50, 350, 0])
+    true_mean_field = np.array([0.2, 0.1, 0.7, 0]) 
 
     # Define comms graph
     G_comms = np.zeros((num_states, num_states))

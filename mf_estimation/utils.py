@@ -201,7 +201,7 @@ def plot_estimation_errors(estimate_history, true_mean_field, num_states):
     plt.xlabel("Communication Round #", fontsize=16)
     plt.ylabel("Total Variation Distance", fontsize=16)
     plt.grid(True)
-    plt.legend()
+    plt.legend(fontsize=14)
     plt.tight_layout()
     plt.show()
 
