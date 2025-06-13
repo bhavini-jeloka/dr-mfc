@@ -2,6 +2,7 @@ import numpy as np
 import cvxpy as cp
 import gurobipy as gp
 from gurobipy import GRB
+import torch
 from .utils import *
 
 class MeanFieldEstimator():
@@ -23,6 +24,8 @@ class MeanFieldEstimator():
 
         self.state_info = {i: [] for i in range(self.num_states)}
         self.estimate_history = {state: [] for state in range(self.num_states)}
+
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.noise_std = 0.0
 
@@ -239,6 +242,24 @@ class MeanFieldEstimator():
         theta = (cssv[rho] - z) / (rho + 1)
         return np.maximum(v - theta, 0)
         '''
+    
+    def l1_projection_mirror_descent(self, z, rhs, num_iters=100, lr=0.01):
+        z = torch.tensor(z, dtype=torch.float32, device=self.device)
+        n = z.shape[0]
+
+        rhs = torch.tensor(rhs, dtype=z.dtype, device=self.device)
+
+        # Initialize x with uniform simplex projection
+        x = torch.full_like(z, rhs / n, device=self.device)
+
+        for _ in range(num_iters):
+            grad = 0.5 * torch.sign(x - z)
+            x = x - lr * grad
+            x = torch.clamp(x, min=0)
+            x = x - (x.sum() - rhs) / n
+            x = torch.clamp(x, min=0)
+
+        return x.cpu().numpy()
     
     def compute_metropolis_weights(self, A):
         # Degree of each node
