@@ -199,36 +199,37 @@ class MeanFieldEstimator():
 
         return x.value
     
-    def gurobi_l1_projection(self, z, rhs):
+    def gurobi_l1_projection(z, rhs):
         """
         Solves: min_x 0.5 * ||x - z||_1 s.t. sum x = rhs, x >= 0
-        using Gurobi (exact LP).
+        using Gurobi with matrix constraint batching.
         """
         z = np.squeeze(z)
         n = len(z)
 
         model = gp.Model()
-        model.setParam('OutputFlag', 0)  # silent mode
+        model.setParam('OutputFlag', 0)  # Silent
 
-        x = model.addVars(n, lb=0, name="x")
-        t = model.addVars(n, lb=0, name="t")
+        # Create variables x and t (concatenated)
+        x = model.addMVar(n, lb=0, name="x")
+        t = model.addMVar(n, lb=0, name="t")
 
         # Objective: 0.5 * sum(t)
-        model.setObjective(0.5 * gp.quicksum(t[i] for i in range(n)), GRB.MINIMIZE)
+        model.setObjective(0.5 * t.sum(), GRB.MINIMIZE)
 
-        # Constraints: t_i >= x_i - z_i and t_i >= z_i - x_i
-        for i in range(n):
-            model.addConstr(t[i] >= x[i] - z[i])
-            model.addConstr(t[i] >= z[i] - x[i])
+        # Constraint: t >= x - z, t >= z - x
+        model.addConstr(t >= x - z)
+        model.addConstr(t >= z - x)
 
-        model.addConstr(gp.quicksum(x[i] for i in range(n)) == rhs)
+        # Simplex constraint: sum x == rhs
+        model.addConstr(x.sum() == rhs)
 
         model.optimize()
 
         if model.Status != GRB.OPTIMAL:
             raise ValueError("Gurobi projection failed.")
 
-        return np.array([x[i].X for i in range(n)])
+        return x.X  # already a NumPy array
 
     '''
     def project_onto_simplex(self, v, z=1.0):
