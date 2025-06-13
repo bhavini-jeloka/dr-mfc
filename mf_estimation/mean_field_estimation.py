@@ -199,7 +199,7 @@ class MeanFieldEstimator():
 
         return x.value
     
-    def gurobi_l1_projection(z, rhs):
+    def gurobi_l1_projection(self, z, rhs):
         """
         Solves: min_x 0.5 * ||x - z||_1 s.t. sum x = rhs, x >= 0
         using Gurobi with matrix constraint batching.
