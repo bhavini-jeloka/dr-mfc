@@ -1,5 +1,7 @@
 import numpy as np
 import cvxpy as cp
+import gurobipy as gp
+from gurobipy import GRB
 from .utils import *
 
 class MeanFieldEstimator():
@@ -162,7 +164,7 @@ class MeanFieldEstimator():
             x[free_indices] = 0.0
         else:
             # Project z_free onto simplex of mass = rhs
-            x_free = self.project_onto_simplex(z_free, rhs)
+            x_free = self.gurobi_l1_projection(z_free, rhs)#self.project_onto_simplex(z_free, rhs)
             x[free_indices] = x_free
 
         return x
@@ -193,6 +195,37 @@ class MeanFieldEstimator():
             raise ValueError("Projection failed or problem is infeasible.")
 
         return x.value
+    
+    def gurobi_l1_projection(self, z, rhs):
+        """
+        Solves: min_x 0.5 * ||x - z||_1 s.t. sum x = rhs, x >= 0
+        using Gurobi (exact LP).
+        """
+        z = np.squeeze(z)
+        n = len(z)
+
+        model = gp.Model()
+        model.setParam('OutputFlag', 0)  # silent mode
+
+        x = model.addVars(n, lb=0, name="x")
+        t = model.addVars(n, lb=0, name="t")
+
+        # Objective: 0.5 * sum(t)
+        model.setObjective(0.5 * gp.quicksum(t[i] for i in range(n)), GRB.MINIMIZE)
+
+        # Constraints: t_i >= x_i - z_i and t_i >= z_i - x_i
+        for i in range(n):
+            model.addConstr(t[i] >= x[i] - z[i])
+            model.addConstr(t[i] >= z[i] - x[i])
+
+        model.addConstr(gp.quicksum(x[i] for i in range(n)) == rhs)
+
+        model.optimize()
+
+        if model.Status != GRB.OPTIMAL:
+            raise ValueError("Gurobi projection failed.")
+
+        return np.array([x[i].X for i in range(n)])
 
     '''
     def project_onto_simplex(self, v, z=1.0):
