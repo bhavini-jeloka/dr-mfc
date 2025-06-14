@@ -58,10 +58,10 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     axs2[idx].plot(avg_l1_benchmark, label='Benchmark')
     axs2[idx].set_title(f'Comm Rounds: {num_comm_rounds}')
     axs2[idx].set_xlabel('Time')
-    axs2[idx].set_ylabel('L1 Error')
+    axs2[idx].set_ylabel('Total Variation Error')
     axs2[idx].legend()
     axs2[idx].grid(True)
 
-fig2.suptitle("Average L1 Error Between Estimated and Desired Mean Field")
+fig2.suptitle("Average Total Variation Error Between Estimated and Desired Mean Field")
 fig2.tight_layout(rect=[0, 0.03, 1, 0.95]) 
 fig2.savefig("subgrid_comms_l1_error_vs_time.png", dpi=300)  
