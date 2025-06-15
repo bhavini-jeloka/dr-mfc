@@ -52,7 +52,7 @@ class Runner():
 
         self.model = PolicyNetwork(self.grid, state_dim_actor=(2, *self.grid), state_dim_critic=(1, *self.grid), action_dim=self.action_dim, policy_type=config["policy_type"])
         
-        self.init_G_comms = get_adjacency_matrix(grid_size=self.grid[0])
+        self.init_G_comms = get_linear_adjacency_matrix(num_states=self.num_states)
         self.fixed_indices = {i: [i] for i in range(self.num_states)}
 
         if self.partial_obs:
@@ -94,7 +94,7 @@ class Runner():
                         fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
                         self.estimator.initialize_comm_round(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
 
-                        new_graph = self.get_new_comms_graph(mean_field)
+                        new_graph = self.get_new_comms_graph_linearly(mean_field)
                         self.estimator.update_comms_graph(new_graph)
 
                         for _ in range(self.num_comm_rounds):
@@ -158,7 +158,7 @@ class Runner():
                         fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
                         self.estimator.initialize_estimate(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
 
-                        new_graph = self.get_new_comms_graph(mean_field)
+                        new_graph = self.get_new_comms_graph_linearly(mean_field)
                         self.estimator.update_comms_graph(new_graph)
 
                         for _ in range(self.num_comm_rounds):
@@ -211,7 +211,7 @@ class Runner():
     
     def get_new_comms_graph_linearly(self, mu):
         # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
-        active_indices = [i for i, val in enumerate(self.mu) if val > 0]
+        active_indices = [i for i, val in enumerate(mu) if val > 0]
 
         n_active = len(active_indices)
         if n_active <= 1:

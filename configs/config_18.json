@@ -25,7 +25,7 @@
     "random_targets":{"blue": false},
 
     "policy_type": "lcp_policy_9x9",
-    "num_comm_rounds": 2,
+    "num_comm_rounds": 20,
 
     "algorithm": "mf_mappo",
     "episode_length": 500,
