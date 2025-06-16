@@ -162,19 +162,25 @@ class PolicyNetwork(nn.Module):
 
         return actions.cpu().numpy()
     
-    def get_est_based_actions(self, combined_state, team_name, num_agent_list, opp_mf=None):
+    def get_est_based_actions(self, combined_state, team_name, num_agent_list, opp_mf_estimate=None):
         # Step 1: Collect local obs and compute indices
         local_obs_list = []
         mf_obs_list = []
-        agent_indices = []
 
         for j in range(num_agent_list):
             key = f"agent_{j}-local-obs"
             local_obs = combined_state[team_name][key]
-            if estimated_mf is not None:
-                coord = tuple(np.argwhere(local_obs[..., 0])[0])
-                idx = np.ravel_multi_index(coord, self.grid)
-                mean_field_obs = estimated_mf[idx].reshape(1, *self.grid)
+            if opp_mf_estimate is not None: 
+                coord = tuple(np.argwhere(local_obs != 0)[0]) 
+                idx = np.ravel_multi_index(coord[:2], self.grid) 
+                idx += coord[2] * self.grid[0] * self.grid[1] 
+                mean_field_opp_est = opp_mf_estimate[idx].reshape(2, *self.grid)
+                if team_name=="blue":
+                    mean_field_self_est = combined_state["global-obs"].transpose(2, 0, 1)[:2]
+                    mean_field_obs = np.concatenate(mean_field_self_est, mean_field_opp_est, axis=0)
+                else:
+                    mean_field_self_est = combined_state["global-obs"].transpose(2, 0, 1)[2:]
+                    mean_field_obs = np.concatenate(mean_field_opp_est, mean_field_self_est, axis=0)
             else:
                 mean_field_obs = combined_state["global-obs"].transpose(2, 0, 1)
             
@@ -184,7 +190,7 @@ class PolicyNetwork(nn.Module):
         # Step 2: Convert to tensors
         local_obs_tensor = torch.tensor(local_obs_list, dtype=torch.float32)       # (N, H, W)
         mf_obs_tensor = torch.tensor(mf_obs_list, dtype=torch.float32)             # (N, H, W)
-
+        #TODO: check order of local obs and mf obs and fasten code
         # Step 3: Stack along channel dim
         state_tensor = torch.cat([local_obs_tensor, mf_obs_tensor], dim=1)       # (N, 2, H, W)
 

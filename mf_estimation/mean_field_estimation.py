@@ -171,7 +171,7 @@ class MeanFieldEstimator():
             x[free_indices] = 0.0
         else:
             # Project z_free onto simplex of mass = rhs
-            x_free = self.gurobi_l1_projection_reuse(z_free, rhs)
+            x_free = self.project_l2_onto_simplex(z_free, rhs)
             x[free_indices] = x_free
 
         return x
@@ -290,18 +290,6 @@ class MeanFieldEstimator():
 
         return x.X  # already a NumPy array
     
-    
-    def project_onto_simplex(self, v, z=1.0):
-        """Projects vector v onto the simplex {x : x >= 0, sum x = z}"""
-        v = np.asarray(v)
-        n = len(v)
-        u = np.sort(v)[::-1]
-        cssv = np.cumsum(u)
-        
-        rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
-        theta = (cssv[rho] - z) / (rho + 1)
-        return np.maximum(v - theta, 0)
-    
     def l1_projection_mirror_descent(self, z, rhs, num_iters=100, lr=0.01):
         z = torch.tensor(z, dtype=torch.float32, device=self.device)
         n = z.shape[0]
@@ -320,6 +308,18 @@ class MeanFieldEstimator():
 
         return x.cpu().numpy()
     '''
+
+    
+    def project_l2_onto_simplex(self, v, z=1.0):
+        """Projects vector v onto the simplex {x : x >= 0, sum x = z}"""
+        v = np.asarray(v)
+        n = len(v)
+        u = np.sort(v)[::-1]
+        cssv = np.cumsum(u)
+        
+        rho = np.nonzero(u * np.arange(1, n+1) > (cssv - z))[0][-1]
+        theta = (cssv[rho] - z) / (rho + 1)
+        return np.maximum(v - theta, 0)
     
     def compute_metropolis_weights(self, A):
         # Degree of each node

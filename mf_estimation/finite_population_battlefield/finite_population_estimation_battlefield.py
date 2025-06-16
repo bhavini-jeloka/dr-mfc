@@ -103,7 +103,7 @@ class Runner():
 
         for ep in range(self.num_test_ep):
 
-            state, _ = self.env.reset() #TODO: fix size of global obs and get actions and the mean-field input of opponent!!!
+            state, _ = self.env.reset() 
             ep_reward = {team:0 for team in self.team_list}
             global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
 
@@ -114,21 +114,27 @@ class Runner():
                 start_index = 0 
 
                 for i in range(self.num_population):
+                    #TODO: check if mf-3.flat() = mf-flat - see how flatten obs works
 
-                    mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
-                    fixed_values = get_fixed_values(self.fixed_indices, mean_field)
+                    if self.team_list[i]=="blue":
+                        mean_field_opp = state["global-obs"].transpose(2, 0, 1)[2:]
+                    else:
+                        mean_field_opp = state["global-obs"].transpose(2, 0, 1)[:2]
+
+                    mean_field_opp = mean_field_opp.flatten() 
+                    fixed_values = get_fixed_values(self.fixed_indices, mean_field_opp)
 
                     mf_estimate = self.estimate_mean_field(
                         estimator=self.estimator[i],
                         estimation_type=self.estimation_module[i],
-                        mean_field=mean_field,
+                        mean_field=mean_field_opp,
                         fixed_indices=self.fixed_indices,
                         fixed_values=fixed_values,
                         num_comm_rounds=self.num_comm_rounds,
                         graph_type = self.comms_graph_struct[i]
                     )
 
-                    action = self.model[i].get_est_based_actions(state, self.team_list[i], self.num_agent_list[i], opp_mf=mf_estimate)
+                    action = self.model[i].get_est_based_actions(state, self.team_list[i], self.num_agent_list[i], opp_mf_estimate=mf_estimate)
                     end_index = start_index + self.num_agent_list[i]
                     all_actions[start_index: end_index] = action
                     start_index = end_index
