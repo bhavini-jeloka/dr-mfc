@@ -37,6 +37,7 @@ class Runner():
 
         self.num_comm_rounds =  config["num_comm_rounds"]
         self.estimation_module = config["estimation_module"]
+        self.comms_graph_struct = config["comms_graph_struct"]
         
         # Call environment 
         self.env = env
@@ -48,21 +49,52 @@ class Runner():
         self.model = []
         self.estimator = {team: None for team in self.team_list}
 
-        self.init_G_comms = get_adjacency_matrix(grid_size=self.grid[0])
+        self.init_G_comms = {team: None for team in self.team_list} 
+
         self.fixed_indices = {i: [i] for i in range(self.num_states)}
 
-        for i in range(self.num_population): # TODO: fix these inputs also
-            self.model[i] = PolicyNetwork(self.grid, state_dim_actor=(2, *self.grid), state_dim_critic=(1, *self.grid), action_dim=self.action_dim, policy_type=config["policy_type"])
-            if self.estimation_module[i] == "benchmark":
-                self.estimator[i] = BenchmarkEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
-            if self.estimation_module[i] == "d-pc":
-                self.estimator[i] = MeanFieldEstimator(self.num_states, horizon_length=1, comms_graph=self.init_G_comms)
+        for i in range(self.num_population):
+            # Initialize model
+            self.model[i] = PolicyNetwork(
+                self.grid,
+                state_dim_actor=(5, *self.grid),
+                state_dim_critic=(4, *self.grid),
+                action_dim=self.action_dim,
+                policy_type=config["policy_type"]
+            )
+
+            module_type = self.estimation_module[i]
+            
+            if module_type in ["none", None]:
+                self.init_G_comms[i] = None
+                self.estimator[i] = None
+                continue  # Skip graph and estimator initialization
+            
+            graph_type = self.comms_graph_struct[i]
+            self.init_G_comms[i] = self.initialize_communication_graph(graph_type, self.num_states[i], self.grid[0])
+            self.estimator[i] = self.initialize_estimator(module_type, self.num_states, self.init_G_comms[i])
 
         # seed
         if self.seed:
             torch.manual_seed(self.seed)
             torch.cuda.manual_seed_all(self.seed)
             np.random.seed(self.seed)
+
+    def initialize_communication_graph(self, graph_type, num_states, grid_size):
+        if graph_type == "linear":#TODO: this should ideally take opponent states but for us it is the same so it is alright
+            return get_linear_adjacency_matrix(num_states=num_states)
+        else:
+            return get_adjacency_matrix(grid_size=grid_size)
+
+    def initialize_estimator(self, module_type, num_states, comms_graph):
+        if module_type == "benchmark":
+            return BenchmarkEstimator(num_states, horizon_length=1, comms_graph=comms_graph)
+        elif module_type == "d-pc":
+            return MeanFieldEstimator(num_states, horizon_length=1, comms_graph=comms_graph)
+        elif module_type in ["none", None]:
+            return None
+        else:
+            raise ValueError(f"Unknown estimation module: {module_type}")
     
     def test(self):
 
@@ -71,15 +103,9 @@ class Runner():
 
         for ep in range(self.num_test_ep):
 
-            state, _ = self.env.reset()
+            state, _ = self.env.reset() #TODO: fix size of global obs and get actions and the mean-field input of opponent!!!
             ep_reward = {team:0 for team in self.team_list}
             global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
-
-            #TODO: continue here
-
-            if self.partial_obs:
-                fixed_values = get_fixed_values(self.fixed_indices, state["global-obs"].transpose(2, 0, 1).flatten())
-                self.estimator.initialize_mean_field(self.fixed_indices, fixed_values)
 
             for t in range(self.max_ep_len):
                 print("Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
@@ -88,24 +114,21 @@ class Runner():
                 start_index = 0 
 
                 for i in range(self.num_population):
-                    if self.partial_obs:
-                        mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
-                        fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
-                        self.estimator.initialize_comm_round(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
 
-                        new_graph = self.get_new_comms_graph(mean_field)
-                        self.estimator.update_comms_graph(new_graph)
+                    mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
+                    fixed_values = get_fixed_values(self.fixed_indices, mean_field)
 
-                        for _ in range(self.num_comm_rounds):
-                            self.estimator.get_new_info()
-                            self.estimator.get_projected_average_estimate(self.fixed_indices, fixed_values)
-                            self.estimator.compute_estimate(copy=True)
+                    mf_estimate = self.estimate_mean_field(
+                        estimator=self.estimator[i],
+                        estimation_type=self.estimation_module[i],
+                        mean_field=mean_field,
+                        fixed_indices=self.fixed_indices,
+                        fixed_values=fixed_values,
+                        num_comm_rounds=self.num_comm_rounds,
+                        graph_type = self.comms_graph_struct[i]
+                    )
 
-                        mf_estimate = self.estimator.get_mf_estimate()
-                    else: 
-                        mf_estimate = None
-                #TODO: After this all good
-                    action = self.model[i].get_actions(state, self.team_list[i], self.num_agent_list[i], estimated_mf=mf_estimate[i])
+                    action = self.model[i].get_est_based_actions(state, self.team_list[i], self.num_agent_list[i], opp_mf=mf_estimate)
                     end_index = start_index + self.num_agent_list[i]
                     all_actions[start_index: end_index] = action
                     start_index = end_index
@@ -135,97 +158,58 @@ class Runner():
             avg_test_reward = test_running_reward[team] / self.num_test_ep
             print('average test reward team {}: {} '.format(team, str(avg_test_reward)))
 
-    def test_benchmark(self):
+    def estimate_mean_field(self, estimator, estimation_type, mean_field, fixed_indices, fixed_values, num_comm_rounds, graph_type):
+        if estimation_type == "d-pc":
+            # Initialize
+            estimator.initialize_mean_field(fixed_indices, fixed_values) if t == 0 \
+                else estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
-        # track total training time
-        test_running_reward = {team:0 for team in self.team_list}
+            # Update graph and perform communication rounds
+            estimator.update_comms_graph(self.get_new_comms_graph(mean_field, graph_type))
+            for _ in range(num_comm_rounds):
+                estimator.get_new_info()
+                estimator.get_projected_average_estimate(fixed_indices, fixed_values)
+                estimator.compute_estimate(copy=True)
 
-        for ep in range(self.num_test_ep):
+        elif estimation_type == "benchmark":
+            estimator.initialize_estimate(fixed_indices=fixed_indices, fixed_values=fixed_values)
+            estimator.update_comms_graph(self.get_new_comms_graph(mean_field, graph_type))
+            for _ in range(num_comm_rounds):
+                estimator.get_new_info()
+            estimator.compute_estimate()
 
-            state, _ = self.env.reset()
-            ep_reward = {team:0 for team in self.team_list}
-            global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+        else:
+            return None
 
-            for t in range(self.max_ep_len):
-                print("Benchmark", self.partial_obs, "| Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
-            
-                all_actions = np.zeros(self.total_num_agents, dtype=int)
-                start_index = 0 
-
-                for i in range(self.num_population):
-                    if self.partial_obs:
-                        mean_field = state["global-obs"].transpose(2, 0, 1).flatten()
-                        fixed_values = get_fixed_values(self.fixed_indices, mean_field) 
-                        self.estimator.initialize_estimate(fixed_indices=self.fixed_indices, fixed_values=fixed_values)
-
-                        new_graph = self.get_new_comms_graph(mean_field)
-                        self.estimator.update_comms_graph(new_graph)
-
-                        for _ in range(self.num_comm_rounds):
-                            self.estimator.get_new_info()
-                        self.estimator.compute_estimate()
-
-                        mf_estimate = self.estimator.get_mf_estimate()
-                    else: 
-                        mf_estimate = None
-
-                    action = self.model.get_actions(state, self.team_list[i], self.num_agent_list[i], estimated_mf=mf_estimate)
-                    end_index = start_index + self.num_agent_list[i]
-                    all_actions[start_index: end_index] = action
-                    start_index = end_index
-
-                state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
-                global_obs_list.append(state["global-obs"].transpose(2, 0, 1).flatten().copy())
-                
-                for team, rew in reward.items():
-                    ep_reward[team] += rew
-                
-                if done or terminated:
-                    for team in self.team_list:
-                        test_running_reward[team] += ep_reward[team]
-                        print('Reward Team {}: {}'.format(team, round(ep_reward[team], 2)))
-                    ep_reward = {team:0 for team in self.team_list}
-
-                    save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_partial_obs_{self.partial_obs}_comm_{self.num_comm_rounds}_benchmark"
-                    os.makedirs(save_dir, exist_ok=True)
-                    filename = os.path.join(save_dir, f"ep_{ep}.npy")
-                    np.save(filename, np.array(global_obs_list))
-                    break
-            
-        self.env.close()
-        
-        for team in self.team_list:
-            avg_test_reward = test_running_reward[team] / self.num_test_ep
-            print('average test reward team {}: {} '.format(team, str(avg_test_reward)))
+        return estimator.get_mf_estimate()
     
-    def get_new_comms_graph(self, mu):
-        G_sub, active_nodes = self.reconstruct_connected_subgraph(mu)
-        adj_matrix = np.zeros((self.num_states, self.num_states))
+    def get_new_comms_graph(self, mu, graph_type):
 
-        # Fill in the subgraph structure at the correct indices
-        for i, u in enumerate(active_nodes):
-            for j, v in enumerate(active_nodes):
-                adj_matrix[u, v] = G_sub[i, j]
-
-        return adj_matrix
-    
-    def get_new_comms_graph_linearly(self, mu):
-        # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
-        active_indices = [i for i, val in enumerate(self.mu) if val > 0]
-
-        n_active = len(active_indices)
-        if n_active <= 1:
-            # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
-            return np.zeros((self.num_states, self.num_states), dtype=int)
-
-        # Initialize adjacency matrix
         adj_matrix = np.zeros((self.num_states, self.num_states), dtype=int)
+        
+        if graph_type=="linear":
+            # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
+            active_indices = [i for i, val in enumerate(self.mu) if val > 0]
 
-        # Connect nodes in a simple path: i <-> i+1
-        for i in range(n_active - 1):
-            a, b = active_indices[i], active_indices[i + 1]
-            adj_matrix[a, b] = 1
-            adj_matrix[b, a] = 1
+            n_active = len(active_indices)
+            if n_active <= 1:
+                # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
+                return np.zeros((self.num_states, self.num_states), dtype=int)
+
+            # Connect nodes in a simple path: i <-> i+1
+            for i in range(n_active - 1):
+                a, b = active_indices[i], active_indices[i + 1]
+                adj_matrix[a, b] = 1
+                adj_matrix[b, a] = 1
+
+        else:
+
+            G_sub, active_nodes = self.reconstruct_connected_subgraph(mu)
+
+            # Fill in the subgraph structure at the correct indices
+            for i, u in enumerate(active_nodes):
+                for j, v in enumerate(active_nodes):
+                    adj_matrix[u, v] = G_sub[i, j]
 
         return adj_matrix
     

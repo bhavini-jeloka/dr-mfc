@@ -32,8 +32,7 @@
     "num_test_episodes": 7,
     "render_mode": "rgb_array",
 
-    "partial_obs": true,
-    "benchmark": true
+    "partial_obs": true
     
   }
 
