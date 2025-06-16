@@ -5,7 +5,7 @@
     "num_parallel_envs" : 1,
 
     "num_population": 1,
-    "num_agent_map": {"blue": 1000},
+    "num_agent_map": {"blue": 100},
     "population_color_list": {"blue": [0, 0, 255]},
 
     "action_dim": 5,
