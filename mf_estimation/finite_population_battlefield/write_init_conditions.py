@@ -10,7 +10,7 @@ import gym_mf_envs
 from gym_mf_envs.wrappers import MultiDiscreteActionWrapper, FlattenObservationWrapper, AnyPopulationAllAgentDoneWrapper, PopulationRewardWrapper
 
 import numpy as np
-from .finite_population_estimation import Runner
+from .finite_population_estimation_battlefield import Runner
 
 def main(config):
 
@@ -59,6 +59,6 @@ def main(config):
                             f"Location: {agent_location}, Alive: {agent_alive}\n")
         
 if __name__ == "__main__":
-    with open("main_config.json", "r") as jsonfile:
+    with open("configs/config_1.json", "r") as jsonfile:
         config = json.load(jsonfile)
     main(config)

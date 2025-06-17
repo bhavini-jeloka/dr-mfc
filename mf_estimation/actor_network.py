@@ -177,10 +177,10 @@ class PolicyNetwork(nn.Module):
                 mean_field_opp_est = opp_mf_estimate[idx].reshape(2, *self.grid)
                 if team_name=="blue":
                     mean_field_self_est = combined_state["global-obs"].transpose(2, 0, 1)[:2]
-                    mean_field_obs = np.concatenate(mean_field_self_est, mean_field_opp_est, axis=0)
+                    mean_field_obs = np.concatenate([mean_field_self_est, mean_field_opp_est], axis=0)
                 else:
                     mean_field_self_est = combined_state["global-obs"].transpose(2, 0, 1)[2:]
-                    mean_field_obs = np.concatenate(mean_field_opp_est, mean_field_self_est, axis=0)
+                    mean_field_obs = np.concatenate([mean_field_opp_est, mean_field_self_est], axis=0)
             else:
                 mean_field_obs = combined_state["global-obs"].transpose(2, 0, 1)
             
@@ -190,10 +190,9 @@ class PolicyNetwork(nn.Module):
         # Step 2: Convert to tensors
         local_obs_tensor = torch.tensor(local_obs_list, dtype=torch.float32)       # (N, H, W)
         mf_obs_tensor = torch.tensor(mf_obs_list, dtype=torch.float32)             # (N, H, W)
-        #TODO: check order of local obs and mf obs and fasten code
+
         # Step 3: Stack along channel dim
         state_tensor = torch.cat([local_obs_tensor, mf_obs_tensor], dim=1)       # (N, 2, H, W)
-
         # Step 4: Pass through policy and sample actions
         action_dists = Categorical(self.act(state_tensor))                         # (N, num_actions)
         actions = action_dists.sample()                                            # (N,)

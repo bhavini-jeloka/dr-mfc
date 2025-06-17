@@ -13,7 +13,7 @@ from gym_mf_envs.wrappers import MultiDiscreteActionWrapper, FlattenObservationW
 from ..actor_network import PolicyNetwork
 
 import numpy as np
-from .finite_population_estimation import Runner
+from .finite_population_estimation_battlefield import Runner
 
 def main(config):
 
@@ -48,7 +48,11 @@ def main(config):
     runner.test()   # estimation technique in config: {"blue": "d-pc", "red": null}
     
 if __name__ == "__main__":
+    with open("configs/config_1.json", "r") as jsonfile:
+            config = json.load(jsonfile)
+    main(config)
 
+    '''
     def numeric_key(path):
         match = re.search(r"config_(\d+)\.json", path)
         return int(match.group(1)) if match else -1
@@ -60,3 +64,4 @@ if __name__ == "__main__":
         with open(config_path, "r") as jsonfile:
             config = json.load(jsonfile)
         main(config)
+    '''

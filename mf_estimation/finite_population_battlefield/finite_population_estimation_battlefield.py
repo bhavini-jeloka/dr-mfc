@@ -17,6 +17,7 @@ sys.path.append('../mf-env')
 import gym_mf_envs
 
 class Runner():
+    #TODO: fix communication graph - no communication with dead agents and subgrid comms - initial estimate assumes most are alive only - subgrid comms should be position based
     def __init__(self, env, config, algorithm_config=None, env_config=None):
         
         self.env_name = config['env_name']
@@ -28,16 +29,18 @@ class Runner():
         
         self.grid = config["size"]
         self.action_dim = config["action_dim"]
-        self.num_states = self.grid[0] * self.grid[1]
+        self.num_states = 2*self.grid[0] * self.grid[1]
         
         self.num_agent_list = list(config["num_agent_map"].values())
         self.team_list = list(config["num_agent_map"].keys())
         self.num_population = config["num_population"]
         self.total_num_agents = sum(self.num_agent_list)
 
+        self.policy_type = list(config["policy_type"].values())
+
         self.num_comm_rounds =  config["num_comm_rounds"]
-        self.estimation_module = config["estimation_module"]
-        self.comms_graph_struct = config["comms_graph_struct"]
+        self.estimation_module = list(config["estimation_module"].values())
+        self.comms_graph_struct = list(config["comms_graph_struct"].values())
         
         # Call environment 
         self.env = env
@@ -47,32 +50,32 @@ class Runner():
             self.frame_delay = 0
 
         self.model = []
-        self.estimator = {team: None for team in self.team_list}
+        self.estimator = []
 
-        self.init_G_comms = {team: None for team in self.team_list} 
+        self.init_G_comms = [] 
 
         self.fixed_indices = {i: [i] for i in range(self.num_states)}
 
         for i in range(self.num_population):
             # Initialize model
-            self.model[i] = PolicyNetwork(
+            self.model.append(PolicyNetwork(
                 self.grid,
                 state_dim_actor=(5, *self.grid),
                 state_dim_critic=(4, *self.grid),
                 action_dim=self.action_dim,
-                policy_type=config["policy_type"]
-            )
+                policy_type=self.policy_type[i]
+            ))
 
             module_type = self.estimation_module[i]
             
             if module_type in ["none", None]:
-                self.init_G_comms[i] = None
-                self.estimator[i] = None
+                self.init_G_comms.append(None)
+                self.estimator.append(None)
                 continue  # Skip graph and estimator initialization
             
             graph_type = self.comms_graph_struct[i]
-            self.init_G_comms[i] = self.initialize_communication_graph(graph_type, self.num_states[i], self.grid[0])
-            self.estimator[i] = self.initialize_estimator(module_type, self.num_states, self.init_G_comms[i])
+            self.init_G_comms.append(self.initialize_communication_graph(graph_type, self.num_states, self.grid[0]))
+            self.estimator.append(self.initialize_estimator(module_type, self.num_states, self.init_G_comms[i]))
 
         # seed
         if self.seed:
@@ -114,7 +117,6 @@ class Runner():
                 start_index = 0 
 
                 for i in range(self.num_population):
-                    #TODO: check if mf-3.flat() = mf-flat - see how flatten obs works
 
                     if self.team_list[i]=="blue":
                         mean_field_opp = state["global-obs"].transpose(2, 0, 1)[2:]
@@ -125,13 +127,15 @@ class Runner():
                     fixed_values = get_fixed_values(self.fixed_indices, mean_field_opp)
 
                     mf_estimate = self.estimate_mean_field(
+                        team=i,
                         estimator=self.estimator[i],
                         estimation_type=self.estimation_module[i],
                         mean_field=mean_field_opp,
                         fixed_indices=self.fixed_indices,
                         fixed_values=fixed_values,
                         num_comm_rounds=self.num_comm_rounds,
-                        graph_type = self.comms_graph_struct[i]
+                        graph_type = self.comms_graph_struct[i],
+                        t=t
                     )
 
                     action = self.model[i].get_est_based_actions(state, self.team_list[i], self.num_agent_list[i], opp_mf_estimate=mf_estimate)
@@ -164,14 +168,14 @@ class Runner():
             avg_test_reward = test_running_reward[team] / self.num_test_ep
             print('average test reward team {}: {} '.format(team, str(avg_test_reward)))
 
-    def estimate_mean_field(self, estimator, estimation_type, mean_field, fixed_indices, fixed_values, num_comm_rounds, graph_type):
+    def estimate_mean_field(self, team, estimator, estimation_type, mean_field, fixed_indices, fixed_values, num_comm_rounds, graph_type, t):
         if estimation_type == "d-pc":
             # Initialize
             estimator.initialize_mean_field(fixed_indices, fixed_values) if t == 0 \
                 else estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
             # Update graph and perform communication rounds
-            estimator.update_comms_graph(self.get_new_comms_graph(mean_field, graph_type))
+            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field, graph_type))
             for _ in range(num_comm_rounds):
                 estimator.get_new_info()
                 estimator.get_projected_average_estimate(fixed_indices, fixed_values)
@@ -179,7 +183,7 @@ class Runner():
 
         elif estimation_type == "benchmark":
             estimator.initialize_estimate(fixed_indices=fixed_indices, fixed_values=fixed_values)
-            estimator.update_comms_graph(self.get_new_comms_graph(mean_field, graph_type))
+            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field, graph_type))
             for _ in range(num_comm_rounds):
                 estimator.get_new_info()
             estimator.compute_estimate()
@@ -189,13 +193,13 @@ class Runner():
 
         return estimator.get_mf_estimate()
     
-    def get_new_comms_graph(self, mu, graph_type):
+    def get_new_comms_graph(self, team, mu, graph_type):
 
         adj_matrix = np.zeros((self.num_states, self.num_states), dtype=int)
         
         if graph_type=="linear":
             # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
-            active_indices = [i for i, val in enumerate(self.mu) if val > 0]
+            active_indices = [i for i, val in enumerate(mu) if val > 0]
 
             n_active = len(active_indices)
             if n_active <= 1:
@@ -210,7 +214,7 @@ class Runner():
 
         else:
 
-            G_sub, active_nodes = self.reconstruct_connected_subgraph(mu)
+            G_sub, active_nodes = self.reconstruct_connected_subgraph(team, mu)
 
             # Fill in the subgraph structure at the correct indices
             for i, u in enumerate(active_nodes):
@@ -219,7 +223,7 @@ class Runner():
 
         return adj_matrix
     
-    def reconstruct_connected_subgraph(self, mu):
+    def reconstruct_connected_subgraph(self, team, mu):
         # Step 1: Identify active nodes
         active_nodes = np.where(mu > 0)[0]
         
@@ -228,7 +232,7 @@ class Runner():
             return np.array([[0]]), active_nodes
 
         # Step 2: Induce subgraph
-        G_full = nx.from_numpy_array(self.init_G_comms)
+        G_full = nx.from_numpy_array(self.init_G_comms[team])
         G_sub = G_full.subgraph(active_nodes).copy()
 
         # Step 3: Check if connected
@@ -248,7 +252,7 @@ class Runner():
                 # First try to find an edge in init_G_comms
                 for u in components[i]:
                     for v in components[j]:
-                        if self.init_G_comms[u, v] == 1 and (u, v) not in added and (v, u) not in added:
+                        if self.init_G_comms[team][u, v] == 1 and (u, v) not in added and (v, u) not in added:
                             min_edge = (u, v)
                             break
                     if min_edge:
