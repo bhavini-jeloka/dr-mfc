@@ -17,7 +17,7 @@ sys.path.append('../mf-env')
 import gym_mf_envs
 
 class Runner():
-    #TODO: fix communication graph - no communication with dead agents and subgrid comms - initial estimate assumes most are alive only - subgrid comms should be position based
+    #initial estimate assumes most are alive only
     def __init__(self, env, config, algorithm_config=None, env_config=None):
         
         self.env_name = config['env_name']
@@ -54,7 +54,12 @@ class Runner():
 
         self.init_G_comms = [] 
 
-        self.fixed_indices = {i: [i] for i in range(self.num_states)}
+        self.num_alive_states = self.num_states // 2
+
+        self.fixed_indices = {
+            i: [i] if i < self.num_alive_states else [i - self.num_alive_states, i]
+            for i in range(self.num_states)
+        }
 
         for i in range(self.num_population):
             # Initialize model
@@ -85,15 +90,15 @@ class Runner():
 
     def initialize_communication_graph(self, graph_type, num_states, grid_size):
         if graph_type == "linear":#TODO: this should ideally take opponent states but for us it is the same so it is alright
-            return get_linear_adjacency_matrix(num_states=num_states)
+            return get_linear_adjacency_matrix_battlefield(num_states=self.num_alive_states)
         else:
-            return get_adjacency_matrix(grid_size=grid_size)
+            return get_adjacency_matrix_battlfield(grid_size=grid_size)
 
     def initialize_estimator(self, module_type, num_states, comms_graph):
         if module_type == "benchmark":
-            return BenchmarkEstimator(num_states, horizon_length=1, comms_graph=comms_graph)
+            return BenchmarkEstimator(num_states, comms_graph=comms_graph)
         elif module_type == "d-pc":
-            return MeanFieldEstimator(num_states, horizon_length=1, comms_graph=comms_graph)
+            return MeanFieldEstimator(num_states, alpha_low=0.05, alpha_high=1.5, comms_graph=comms_graph)
         elif module_type in ["none", None]:
             return None
         else:
@@ -195,44 +200,40 @@ class Runner():
     
     def get_new_comms_graph(self, team, mu, graph_type):
 
-        adj_matrix = np.zeros((self.num_states, self.num_states), dtype=int)
-        
-        if graph_type=="linear":
-            # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
-            active_indices = [i for i, val in enumerate(mu) if val > 0]
+        adj_matrix = np.zeros((self.num_alive_states, self.num_alive_states), dtype=int)
 
-            n_active = len(active_indices)
-            if n_active <= 1:
-                # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
-                return np.zeros((self.num_states, self.num_states), dtype=int)
-
-            # Connect nodes in a simple path: i <-> i+1
-            for i in range(n_active - 1):
+        if graph_type == "linear":
+            active_indices = [i for i, val in enumerate(mu) if val > 0 and i >= self.num_alive_states]
+            active_indices = [i - self.num_alive_states for i in active_indices]  # shift to 0...n-1
+            for i in range(len(active_indices) - 1):
                 a, b = active_indices[i], active_indices[i + 1]
                 adj_matrix[a, b] = 1
                 adj_matrix[b, a] = 1
-
         else:
-
             G_sub, active_nodes = self.reconstruct_connected_subgraph(team, mu)
-
-            # Fill in the subgraph structure at the correct indices
             for i, u in enumerate(active_nodes):
                 for j, v in enumerate(active_nodes):
                     adj_matrix[u, v] = G_sub[i, j]
+        
+        zero_block = np.zeros_like(adj_matrix)
 
-        return adj_matrix
+        return np.block([
+            [zero_block, zero_block],
+            [zero_block, adj_matrix]
+        ])
+
     
     def reconstruct_connected_subgraph(self, team, mu):
         # Step 1: Identify active nodes
-        active_nodes = np.where(mu > 0)[0]
-        
+        active_nodes = [i for i, val in enumerate(mu) if val > 0 and i >= self.num_alive_states]
+        active_nodes = [i - self.num_alive_states for i in active_nodes]
+
         if len(active_nodes) == 1:
             # Single node is trivially connected
             return np.array([[0]]), active_nodes
 
         # Step 2: Induce subgraph
-        G_full = nx.from_numpy_array(self.init_G_comms[team])
+        G_full = nx.from_numpy_array(self.init_G_comms[team][self.num_alive_states:, self.num_alive_states:])
         G_sub = G_full.subgraph(active_nodes).copy()
 
         # Step 3: Check if connected
@@ -252,7 +253,8 @@ class Runner():
                 # First try to find an edge in init_G_comms
                 for u in components[i]:
                     for v in components[j]:
-                        if self.init_G_comms[team][u, v] == 1 and (u, v) not in added and (v, u) not in added:
+                        u_global, v_global = u + self.num_alive_states, v + self.num_alive_states
+                        if self.init_G_comms[team][u_global, v_global] == 1 and (u, v) not in added and (v, u) not in added:
                             min_edge = (u, v)
                             break
                     if min_edge:
@@ -273,5 +275,4 @@ class Runner():
 
         # Ensure graph is now connected
         assert nx.is_connected(G_sub), "Graph is still not connected after edge augmentation."
-
         return nx.to_numpy_array(G_sub, nodelist=active_nodes), active_nodes

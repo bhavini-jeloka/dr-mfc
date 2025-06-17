@@ -301,3 +301,53 @@ def get_linear_adjacency_matrix(num_states):
         adj_matrix[b, a] = 1
 
     return adj_matrix
+
+def get_adjacency_matrix_battlfield(grid_size=9):
+    n_cells = grid_size * grid_size
+    adj_matrix = np.zeros((n_cells, n_cells), dtype=int)
+
+    for row in range(grid_size):
+        for col in range(grid_size):
+            idx = row * grid_size + col
+            # Iterate over 3x3 neighborhood
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    nr, nc = row + dr, col + dc
+                    if 0 <= nr < grid_size and 0 <= nc < grid_size:
+                        n_idx = nr * grid_size + nc
+                        if n_idx != idx:  # exclude self-connection
+                            adj_matrix[idx, n_idx] = 1
+
+    zero_block = np.zeros_like(adj_matrix)
+    A = np.block([
+        [zero_block, zero_block],
+        [zero_block, adj_matrix]
+    ])
+
+    return A
+
+def get_linear_adjacency_matrix_battlefield(num_states):
+    # get new adjacency matrix based on graph and ensure connectedness - line graph at the moment s_i <-> s_{i+1}
+    active_indices = np.arange(num_states)
+
+    n_active = len(active_indices)
+    if n_active <= 1:
+        # Return a 0x0 or 1x1 matrix depending on if we have 0 or 1 active node
+        return np.zeros((num_states, num_states), dtype=int)
+
+    # Initialize adjacency matrix
+    adj_matrix = np.zeros((num_states, num_states), dtype=int)
+
+    # Connect nodes in a simple path: i <-> i+1
+    for i in range(n_active - 1):
+        a, b = active_indices[i], active_indices[i + 1]
+        adj_matrix[a, b] = 1
+        adj_matrix[b, a] = 1
+
+    zero_block = np.zeros_like(adj_matrix)
+    A = np.block([
+        [zero_block, zero_block],
+        [zero_block, adj_matrix]
+    ])
+
+    return A

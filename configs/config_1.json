@@ -5,7 +5,7 @@
     "num_parallel_envs" : 1,
 
     "num_population": 2,
-    "num_agent_map": {"blue": 100, "red": 100},
+    "num_agent_map": {"blue": 10, "red": 10},
     "population_color_list": {"blue": [0, 0, 255], "red": [255, 0, 0]},
 
     "action_dim": 5,
@@ -29,11 +29,11 @@
     "policy_type": {"blue": "battlefield/0", "red": "battlefield/1"} ,
     "num_comm_rounds": 20,
     "estimation_module": {"blue": "d-pc", "red": "d-pc"} ,
-    "comms_graph_struct": {"blue": "linear", "red": "linear"} ,
+    "comms_graph_struct": {"blue": "subgrid", "red": "subgrid"} ,
 
     "algorithm": "mf_mappo",
-    "episode_length": 20,
-    "num_test_episodes": 10,
+    "episode_length": 5,
+    "num_test_episodes": 1,
     "render_mode": "rgb_array"
     
   }

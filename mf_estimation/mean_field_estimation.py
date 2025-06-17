@@ -7,7 +7,7 @@ from .utils import *
 
 class MeanFieldEstimator():
     def __init__(self, num_states=3, horizon_length=1, num_particles=1000, 
-                 comms_graph=None, fixed_indices=None, fixed_values=None, seed=None):
+                 comms_graph=None, alpha_low=1, alpha_high=1, seed=None):
         super().__init__()
 
         if seed is not None:
@@ -33,6 +33,9 @@ class MeanFieldEstimator():
         self._gurobi_x = None
         self._gurobi_rhs_constr = None
 
+        self.alpha_vec = np.full(self.num_states, alpha_high)
+        self.alpha_vec[:self.num_states // 2] = alpha_low
+
     def sample_particles(self, fixed_indices, fixed_values):
         self.weights =  {i: np.ones(self.num_particles)/self.num_particles for i in range(self.num_states)}
         self.particles = np.zeros((self.num_states, self.num_particles, self.num_states))
@@ -46,7 +49,7 @@ class MeanFieldEstimator():
         return np.exp(exponent) # Gaussian prior
 
 
-    def _sample_constrained_dirichlet(self, fixed_indices, fixed_values, alpha=1.0, D=1):
+    def _sample_constrained_dirichlet(self, fixed_indices, fixed_values, D=1):
         fixed_indices = np.array(fixed_indices)
         fixed_values = np.array(fixed_values)
         
@@ -58,19 +61,14 @@ class MeanFieldEstimator():
         all_indices = np.arange(self.num_states)
 
         free_indices = np.setdiff1d(all_indices, fixed_indices)
-        num_free = len(free_indices)
 
-        # Sample D Dirichlet vectors for free indices
-        dirichlet_samples = np.random.dirichlet([alpha] * num_free, size=D)
-        scaled_samples = dirichlet_samples * remaining_mass  # shape (D, num_free)
+        # Use only the alphas corresponding to free indices
+        dirichlet_samples = np.random.dirichlet(self.alpha_vec[free_indices], size=D)
+        scaled_samples = dirichlet_samples * remaining_mass  # shape (D, len(free_indices))
 
         # Construct full D samples
         full_samples = np.zeros((D, self.num_states))
-
-        # Fill in fixed values
         full_samples[:, fixed_indices] = fixed_values
-
-        # Fill in sampled values for free indices
         full_samples[:, free_indices] = scaled_samples
 
         return full_samples  # shape: (D, num_states)
