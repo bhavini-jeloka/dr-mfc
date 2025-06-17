@@ -155,7 +155,7 @@ class Runner():
                         print('Reward Team {}: {}'.format(team, round(ep_reward[team], 2)))
                     ep_reward = {team:0 for team in self.team_list}
 
-                    est_module_str = "_".join([f"{team}-{name}" for team, name in self.estimation_module.items()])
+                    est_module_str = "_".join([f"{team}-{name}" for team, name in zip(self.team_list, self.estimation_module)])
                     save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_comm_{self.num_comm_rounds}_{est_module_str}"
                     os.makedirs(save_dir, exist_ok=True)
                     filename = os.path.join(save_dir, f"ep_{ep}.npy")
