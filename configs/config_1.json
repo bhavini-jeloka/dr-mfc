@@ -33,7 +33,7 @@
 
     "algorithm": "mf_mappo",
     "episode_length": 20,
-    "num_test_episodes": 100,
-    "render_mode": "rgb_array"
+    "num_test_episodes": 10,
+    "render_mode": "human"
     
   }
