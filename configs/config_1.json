@@ -27,13 +27,13 @@
                       "alpha": {"blue": 15, "red": 5}},
 
     "policy_type": {"blue": "battlefield/0", "red": "battlefield/1"} ,
-    "num_comm_rounds": 1,
+    "num_comm_rounds": 20,
     "estimation_module": {"blue": "d-pc", "red": "d-pc"} ,
     "comms_graph_struct": {"blue": "linear", "red": "linear"} ,
 
     "algorithm": "mf_mappo",
-    "episode_length": 5,
-    "num_test_episodes": 1,
+    "episode_length": 20,
+    "num_test_episodes": 10,
     "render_mode": "rgb_array"
     
   }
