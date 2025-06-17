@@ -32,7 +32,8 @@ def main(config):
     # make environment
     env =       TimeLimit(AnyPopulationAllAgentDoneWrapper(PopulationRewardWrapper(FlattenObservationWrapper(
                  MultiDiscreteActionWrapper(gym.make(env_name, grid_size=config["size"],
-                 num_population=config["num_population"], num_agent_dict=config["num_agent_map"],
+                 num_population=config["num_population"], render_mode = config["render_mode"],
+                 num_agent_dict=config["num_agent_map"],
                  population_color_dict=config["population_color_list"],
                  identical_grid_world=config["identical_grid_world"],
                  penetrable_obstacles_dict=config["penetrable_obstacles"],
