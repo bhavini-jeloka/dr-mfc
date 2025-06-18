@@ -49,11 +49,7 @@ def main(config):
     runner.test()   # estimation technique in config: {"blue": "d-pc", "red": null}
     
 if __name__ == "__main__":
-    with open("configs/config_1.json", "r") as jsonfile:
-            config = json.load(jsonfile)
-    main(config)
-
-    '''
+    
     def numeric_key(path):
         match = re.search(r"config_(\d+)\.json", path)
         return int(match.group(1)) if match else -1
@@ -65,4 +61,3 @@ if __name__ == "__main__":
         with open(config_path, "r") as jsonfile:
             config = json.load(jsonfile)
         main(config)
-    '''
