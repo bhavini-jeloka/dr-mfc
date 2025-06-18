@@ -5,6 +5,8 @@ png
 *csv
 *gif
 data
+results
+generate_configs.py
 
 *.py[cod]
 *$py.class

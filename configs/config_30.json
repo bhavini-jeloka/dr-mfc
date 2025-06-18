@@ -132,14 +132,14 @@
         "blue": "battlefield/0",
         "red": "battlefield/1"
     },
-    "num_comm_rounds": 15,
+    "num_comm_rounds": 20,
     "estimation_module": {
-        "blue": "d-pc",
-        "red": null
+        "blue": null,
+        "red": "d-pc"
     },
     "comms_graph_struct": {
-        "blue": "subgrid",
-        "red": null
+        "blue": null,
+        "red": "subgrid"
     },
     "algorithm": "mf_mappo",
     "episode_length": 20,

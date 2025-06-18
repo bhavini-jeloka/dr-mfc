@@ -134,12 +134,12 @@
     },
     "num_comm_rounds": 15,
     "estimation_module": {
-        "blue": "d-pc",
-        "red": null
+        "blue": "benchmark",
+        "red": "d-pc"
     },
     "comms_graph_struct": {
         "blue": "subgrid",
-        "red": null
+        "red": "subgrid"
     },
     "algorithm": "mf_mappo",
     "episode_length": 20,
