@@ -70,6 +70,37 @@ class BenchmarkEstimator():
 
         self.mean_field_estimate = updated_estimates
 
+    '''
+    def get_new_info(self, mean_field_self=None):
+        updated_estimates = {state: self.mean_field_estimate[state].copy()
+                            for state in range(self.num_states)}
+
+        for state in range(self.num_states):
+            # Accumulators for averaging noisy values
+            sum_estimates = np.zeros_like(self.mean_field_estimate[state])
+            count_estimates = np.zeros_like(self.mean_field_estimate[state])
+
+            for nbr in range(self.num_states):
+                if self.G_comms[state][nbr] and ((mean_field_self[state]> 0 and mean_field_self[nbr]>0) or state==nbr):
+                    neighbor_estimate = self.mean_field_estimate[nbr]
+                    to_update = ~np.isnan(neighbor_estimate)
+
+                    # Add Gaussian noise to neighbor's estimate (communication noise)
+                    noise = np.random.normal(loc=0.0, scale=self.noise_std, size=neighbor_estimate.shape) if nbr != state else 0
+                    noisy_estimate = neighbor_estimate + noise
+
+                    # Accumulate values and count for averaging
+                    sum_estimates[to_update] += noisy_estimate[to_update]
+                    count_estimates[to_update] += 1
+
+            # Average over all neighbors that provided information
+            to_update_final = count_estimates > 0
+            updated_estimates[state][to_update_final] = sum_estimates[to_update_final] / count_estimates[to_update_final]
+
+        self.mean_field_estimate = updated_estimates
+    
+    '''
+
     def compute_estimate(self):
         for state in range(self.num_states):
             est = self.mean_field_estimate[state]
