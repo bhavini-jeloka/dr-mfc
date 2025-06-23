@@ -41,7 +41,7 @@ class BenchmarkEstimator():
                     updated_estimates[state][to_update] = self.mean_field_estimate[nbr][to_update]
         self.mean_field_estimate = updated_estimates
     '''
-
+    '''
     def get_new_info(self):
         updated_estimates = {state: self.mean_field_estimate[state].copy()
                             for state in range(self.num_states)}
@@ -99,7 +99,7 @@ class BenchmarkEstimator():
 
         self.mean_field_estimate = updated_estimates
     
-    '''
+    
 
     def compute_estimate(self):
         for state in range(self.num_states):

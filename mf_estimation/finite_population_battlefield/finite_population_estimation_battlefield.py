@@ -185,17 +185,17 @@ class Runner():
                 else estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
             # Update graph and perform communication rounds
-            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field_self, graph_type))
+            #estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field_self, graph_type))
             for _ in range(num_comm_rounds):
-                estimator.get_new_info()
+                estimator.get_new_info(mean_field_self)
                 estimator.get_projected_average_estimate(fixed_indices, fixed_values)
                 estimator.compute_estimate(copy=True)
 
         elif estimation_type == "benchmark":
             estimator.initialize_estimate(fixed_indices=fixed_indices, fixed_values=fixed_values)
-            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field_self, graph_type))
+            #estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field_self, graph_type))
             for _ in range(num_comm_rounds):
-                estimator.get_new_info()
+                estimator.get_new_info(mean_field_self)
             estimator.compute_estimate()
 
         else:
