@@ -207,6 +207,6 @@
     },
     "algorithm": "mf_mappo",
     "episode_length": 64,
-    "num_test_episodes": 10,
+    "num_test_episodes": 25,
     "render_mode": "rgb_array"
 }
