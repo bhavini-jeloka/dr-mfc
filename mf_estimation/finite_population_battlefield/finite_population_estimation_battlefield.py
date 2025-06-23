@@ -113,7 +113,8 @@ class Runner():
 
             state, _ = self.env.reset() 
             ep_reward = {team:0 for team in self.team_list}
-            global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+            #global_obs_list = [state["global-obs"].transpose(2, 0, 1).flatten().copy()]
+            rewards_list = []
 
             for t in range(self.max_ep_len):
                 print("Communication round", self.num_comm_rounds, "| Episode:", ep, "| Timestep:", t)
@@ -125,17 +126,20 @@ class Runner():
 
                     if self.team_list[i]=="blue":
                         mean_field_opp = state["global-obs"].transpose(2, 0, 1)[2:]
+                        mean_field_self = state["global-obs"].transpose(2, 0, 1)[:2]
                     else:
                         mean_field_opp = state["global-obs"].transpose(2, 0, 1)[:2]
+                        mean_field_self = state["global-obs"].transpose(2, 0, 1)[2:]
 
                     mean_field_opp = mean_field_opp.flatten() 
+                    mean_field_self = mean_field_self.flatten()
                     fixed_values = get_fixed_values(self.fixed_indices, mean_field_opp)
 
                     mf_estimate = self.estimate_mean_field(
                         team=i,
                         estimator=self.estimator[i],
                         estimation_type=self.estimation_module[i],
-                        mean_field=mean_field_opp,
+                        mean_field_self = mean_field_self,
                         fixed_indices=self.fixed_indices,
                         fixed_values=fixed_values,
                         num_comm_rounds=self.num_comm_rounds,
@@ -149,7 +153,7 @@ class Runner():
                     start_index = end_index
 
                 state, reward, done, terminated,_ = self.env.step(all_actions.astype(int))
-                global_obs_list.append(state["global-obs"].transpose(2, 0, 1).flatten().copy())
+                rewards_list.append(reward["blue"])
                 
                 for team, rew in reward.items():
                     ep_reward[team] += rew
@@ -161,10 +165,10 @@ class Runner():
                     ep_reward = {team:0 for team in self.team_list}
 
                     est_module_str = "_".join([f"{team}-{name}" for team, name in zip(self.team_list, self.estimation_module)])
-                    save_dir = f"mean_field_trajectory/grid_{self.grid[0]}x{self.grid[1]}_comm_{self.num_comm_rounds}_{est_module_str}"
+                    save_dir = f"rewards/grid_{self.grid[0]}x{self.grid[1]}_comm_{self.num_comm_rounds}_{est_module_str}"
                     os.makedirs(save_dir, exist_ok=True)
                     filename = os.path.join(save_dir, f"ep_{ep}.npy")
-                    np.save(filename, np.array(global_obs_list))
+                    np.save(filename, np.array(rewards_list))
                     break
             
         self.env.close()
@@ -173,14 +177,15 @@ class Runner():
             avg_test_reward = test_running_reward[team] / self.num_test_ep
             print('average test reward team {}: {} '.format(team, str(avg_test_reward)))
 
-    def estimate_mean_field(self, team, estimator, estimation_type, mean_field, fixed_indices, fixed_values, num_comm_rounds, graph_type, t):
+    def estimate_mean_field(self, team, estimator, estimation_type, mean_field_self, fixed_indices, fixed_values, num_comm_rounds, graph_type, t):
+        # communication graph is between the agents within the team!!!! therefore it should look at self mf
         if estimation_type == "d-pc":
             # Initialize
             estimator.initialize_mean_field(fixed_indices, fixed_values) if t == 0 \
                 else estimator.initialize_comm_round(fixed_indices=fixed_indices, fixed_values=fixed_values)
 
             # Update graph and perform communication rounds
-            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field, graph_type))
+            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field_self, graph_type))
             for _ in range(num_comm_rounds):
                 estimator.get_new_info()
                 estimator.get_projected_average_estimate(fixed_indices, fixed_values)
@@ -188,7 +193,7 @@ class Runner():
 
         elif estimation_type == "benchmark":
             estimator.initialize_estimate(fixed_indices=fixed_indices, fixed_values=fixed_values)
-            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field, graph_type))
+            estimator.update_comms_graph(self.get_new_comms_graph(team, mean_field_self, graph_type))
             for _ in range(num_comm_rounds):
                 estimator.get_new_info()
             estimator.compute_estimate()

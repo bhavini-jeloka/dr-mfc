@@ -109,6 +109,22 @@ class MeanFieldEstimator():
                     
                     self.state_info[i].append(noisy_estimate)
 
+    '''
+    def get_new_info(self, mean_field_self=None):
+        for i in range(self.num_states):
+            self.state_info[i] = []
+            for j in range(self.num_states):
+                if self.G_comms[i][j] and ((mean_field_self[i]>0 and mean_field_self[j]>0) or (i==j)):
+                    estimate = self.mean_field_estimate[j].flatten()
+                    
+                    # Add Gaussian noise of appropriate size
+                    noise = np.random.normal(loc=0.0, scale=self.noise_std, size=estimate.shape) if j != i else 0
+                    noisy_estimate = estimate + noise
+                    
+                    self.state_info[i].append(noisy_estimate)
+    
+    '''
+
     def get_projected_average_estimate(self, fixed_indices, fixed_values):
         for state in range(self.num_states):
             # Start with the initial mean field estimate
@@ -125,7 +141,7 @@ class MeanFieldEstimator():
         masked_weights = weights[mask]
         #masked_weights /= masked_weights.sum()
 
-        vectors = np.array(self.state_info[state])  
+        vectors = np.array(self.state_info[state]) #masked_weights = 1/vectors.shape[0]*np.ones(vectors.shape[0])
 
         avg = masked_weights @ vectors             
         return avg.reshape(1, -1)      
