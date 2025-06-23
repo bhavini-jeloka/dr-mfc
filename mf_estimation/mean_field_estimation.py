@@ -141,7 +141,8 @@ class MeanFieldEstimator():
         masked_weights = weights[mask]
         #masked_weights /= masked_weights.sum()
 
-        vectors = masked_weights = 1/vectors.shape[0]*np.ones(vectors.shape[0]) # np.array(self.state_info[state]) #masked_weights = 1/vectors.shape[0]*np.ones(vectors.shape[0])
+        vectors = np.array(self.state_info[state]) #
+        masked_weights = 1/vectors.shape[0]*np.ones(vectors.shape[0])
 
         avg = masked_weights @ vectors             
         return avg.reshape(1, -1)      
