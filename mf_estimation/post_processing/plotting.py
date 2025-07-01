@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
+comm_rounds_list = [10, 20, 30, 40, 50, 60, 70, 80]
 
 # Rewards metric
 fig, axs = plt.subplots(2, 4, figsize=(12, 8), sharey=True)
@@ -19,20 +19,22 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     rewards_benchmark = np.load(f'rewards_actual_benchmark_all_seeds_{num_comm_rounds}.npy')
     rewards_desired = np.load(f'rewards_desired_all_seeds_{num_comm_rounds}.npy')
 
-    # Average across seeds
-    avg_dpc = rewards_dpc.mean(axis=0)
-    avg_benchmark = rewards_benchmark.mean(axis=0)
-    avg_desired = rewards_desired.mean(axis=0)
+    # Step 1: Compute cumulative rewards per seed
+    cumsum_dpc = np.cumsum(rewards_dpc, axis=1)          # shape: (n_seeds, T)
+    cumsum_benchmark = np.cumsum(rewards_benchmark, axis=1)
+    cumsum_desired = np.cumsum(rewards_desired, axis=1)
 
-    error_dpc = np.abs(np.sum(avg_dpc - avg_desired)) / np.abs(np.sum(avg_desired))
-    error_benchmark = np.abs(np.sum(avg_benchmark - avg_desired)) / np.abs(np.sum(avg_desired))
+    # Step 2: Compute absolute difference to desired per seed
+    abs_err_dpc = np.abs(cumsum_dpc - cumsum_desired)    # shape: (n_seeds, T)
+    abs_err_benchmark = np.abs(cumsum_benchmark - cumsum_desired)
 
-    # Plot
-    cumsum_dpc = np.cumsum(avg_dpc)
-    cumsum_benchmark = np.cumsum(avg_benchmark)
-    cumsum_desired = np.cumsum(avg_desired)
-    axs[idx].plot(np.abs(cumsum_dpc-cumsum_desired), label='D-PC (Ours)')
-    axs[idx].plot(np.abs(cumsum_benchmark-cumsum_desired), label='Benchmark')
+    # Step 3: Average across seeds
+    avg_abs_err_dpc = abs_err_dpc.mean(axis=0)
+    avg_abs_err_benchmark = abs_err_benchmark.mean(axis=0)
+
+    # Step 4: Plot
+    axs[idx].plot(avg_abs_err_dpc, label='D-PC (Ours)')
+    axs[idx].plot(avg_abs_err_benchmark, label='Benchmark')
     #axs[idx].plot(cumsum_desired, label='Desired Reward', linestyle='dashed')
     #axs[idx].plot(np.abs(cumsum_actual - cumsum_desired), label='|Cumulative Reward Diff|')
     axs[idx].set_title(fr'$R_{{\mathrm{{com}}}} = {num_comm_rounds}$', fontsize=14)
@@ -43,7 +45,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     
 fig.suptitle("Comparing Cumulative Rewards $|\sum_{t=0}^{T} r^{\pi_t}(\mu_t) - \sum_{t=0}^{T} r^{\pi_t}(\mu^A_t)|$ for Grid-Navigation", fontsize=18)
 fig.tight_layout(rect=[0, 0.03, 1, 0.95]) 
-fig.savefig("subgrid_comms_rewards.png", dpi=300)
+fig.savefig("linear_comms_rewards.png", dpi=300)
 
 for idx, num_comm_rounds in enumerate(comm_rounds_list):
 
