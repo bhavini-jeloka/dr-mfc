@@ -71,7 +71,7 @@ class LargeGridNavDynamicsEval():  # Under known fixed policy (included implicit
         return np.array(np.unravel_index(idx, (self.grid, self.grid)))
     
     def compute_reward(self):
-        return np.sum(self.mu[self.targets])
+        return np.sum(self.mu[self.targets]) - 1
 
     def compute_next_mean_field(self, obs):
         policy = self.get_fixed_policy(obs)

@@ -95,7 +95,7 @@ class MeanFieldEstimator():
                 if self.G_comms[i][j]:
                     self.state_info[i].append(self.mean_field_estimate[j].flatten())
     '''
-    '''
+    
     def get_new_info(self):
         for i in range(self.num_states):
             self.state_info[i] = []
@@ -123,7 +123,7 @@ class MeanFieldEstimator():
                     
                     self.state_info[i].append(noisy_estimate)
     
-    
+    '''
 
     def get_projected_average_estimate(self, fixed_indices, fixed_values):
         for state in range(self.num_states):
@@ -141,8 +141,8 @@ class MeanFieldEstimator():
         masked_weights = weights[mask]
         #masked_weights /= masked_weights.sum()
 
-        vectors = np.array(self.state_info[state]) #
-        masked_weights = 1/vectors.shape[0]*np.ones(vectors.shape[0])
+        vectors = np.array(self.state_info[state]) 
+        #masked_weights = 1/vectors.shape[0]*np.ones(vectors.shape[0])
 
         avg = masked_weights @ vectors             
         return avg.reshape(1, -1)      
