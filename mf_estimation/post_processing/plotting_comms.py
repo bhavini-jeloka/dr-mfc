@@ -4,7 +4,7 @@ import numpy as np
 comm_rounds_list = [1, 2, 3, 4, 5, 6, 7, 8]
 time_steps = [100, 200, 300, 400, 500, 600, 700, 800, 900, -1]
 
-fig, axs = plt.subplots(2, 5, figsize=(18, 10), sharey=True)
+fig, axs = plt.subplots(2, 5, figsize=(12, 8), sharey=True)
 axs = axs.flatten()
 
 for idx, time_step in enumerate(time_steps):
@@ -64,14 +64,14 @@ for num_comm_rounds in comm_rounds_list:
         print(f"Missing file for comm_rounds={num_comm_rounds}, skipping.")
 
 # Plotting
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(12, 8))
 plt.plot(valid_comm_rounds, summed_avg_l1_dpc, marker='o', label='D-PC (Ours)')
 plt.plot(valid_comm_rounds, summed_avg_l1_benchmark, marker='s', label='Benchmark')
-plt.xlabel(fr'$R_{{\mathrm{{com}}}}$', fontsize=12)
-plt.ylabel("Cumulative Total Variation", fontsize=12)
-plt.title("Cumulative Total Variation Error $\sum_{t=0}^T\mathrm{d}_{\mathrm{TV}}(\mu_t, \mu^A_t)$ vs $R_{{\mathrm{{com}}}}$", fontsize=14)
+plt.xlabel(fr'$R_{{\mathrm{{com}}}}$', fontsize=24)
+plt.ylabel("Cumulative Total Variation", fontsize=24)
+plt.title("Cumulative Total Variation Error $\sum_{t=0}^T\mathrm{d}_{\mathrm{TV}}(\mu_t, \mu^A_t)$ vs $R_{{\mathrm{{com}}}}$", fontsize=24)
 plt.grid(True)
-plt.legend(fontsize=12)
+plt.legend(fontsize=24)
 plt.tight_layout()
 plt.savefig("subgrid_total_l1_error_vs_comm_rounds.png", dpi=300)
 plt.show()
