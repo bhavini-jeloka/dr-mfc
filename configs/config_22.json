@@ -2,8 +2,8 @@
     "seed": 42,
     "env_name": "gym_mf_envs/MF-Battle-v0",
     "size": [
-        8,
-        8
+        4,
+        4
     ],
     "num_parallel_envs": 1,
     "num_population": 2,
@@ -72,8 +72,8 @@
     },
     "identical_grid_world": false,
     "n_obstacles": {
-        "blue": 8,
-        "red": 10
+        "blue": 1,
+        "red": 2
     },
     "random_obstacles": {
         "blue": false,
@@ -82,78 +82,18 @@
     "obstacle_locations": {
         "blue": [
             [
-                2,
-                0
-            ],
-            [
-                2,
-                1
-            ],
-            [
-                0,
-                3
-            ],
-            [
                 1,
-                3
-            ],
-            [
-                6,
-                4
-            ],
-            [
-                7,
-                4
-            ],
-            [
-                5,
-                6
-            ],
-            [
-                5,
-                7
+                1
             ]
         ],
         "red": [
             [
-                2,
-                0
-            ],
-            [
-                2,
+                1,
                 1
             ],
             [
                 0,
-                3
-            ],
-            [
-                1,
-                3
-            ],
-            [
-                6,
-                4
-            ],
-            [
-                7,
-                4
-            ],
-            [
-                5,
-                6
-            ],
-            [
-                5,
-                7
-            ],
-            [
-                1,
-                1
-            ],
-            [
-                6,
-                6
+                0
             ]
         ]
     },
@@ -164,18 +104,14 @@
     "target_locations": {
         "blue": [
             [
-                1,
-                1
-            ],
-            [
-                6,
-                6
+                0,
+                0
             ]
         ],
         "red": null
     },
     "n_targets": {
-        "blue": 2,
+        "blue": 1,
         "red": 0
     },
     "random_targets": {
@@ -193,10 +129,10 @@
         }
     },
     "policy_type": {
-        "blue": "battlefield/8x8/0",
-        "red": "battlefield/8x8/1"
+        "blue": "battlefield/4x4/0",
+        "red": "battlefield/4x4/1"
     },
-    "num_comm_rounds": 30,
+    "num_comm_rounds": 15,
     "estimation_module": {
         "blue": "benchmark",
         "red": null
@@ -206,7 +142,7 @@
         "red": null
     },
     "algorithm": "mf_mappo",
-    "episode_length": 64,
+    "episode_length": 20,
     "num_test_episodes": 25,
     "render_mode": "rgb_array"
 }
