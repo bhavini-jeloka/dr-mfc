@@ -5,8 +5,8 @@ import os
 def get_l1_error(config_dir, ep, num_timesteps, num_states, ground_truth_blue, ground_truth_red):
     path = os.path.join(config_dir, f"ep_{ep}.npy")
     if os.path.exists(path):
-        mf_blue = np.load(path)[:, :32]
-        mf_red = np.load(path)[:, 32:]
+        mf_blue = np.load(path)[:, :num_states]
+        mf_red = np.load(path)[:, num_states:]
 
         target_len = ground_truth_blue.shape[0]
 
@@ -27,10 +27,10 @@ def pad_array(arr, target_length, num_states, pad_value=0.0): # Or np.nan
     padding = np.full(padding_shape, pad_value)
     return np.vstack((arr, padding))
 
-comm_rounds_list = [5, 10, 15, 20, 25, 30]
+comm_rounds_list = [10, 20, 30, 40, 50, 60]
 num_episodes = 25
-num_timesteps = 21
-grid = (4, 4)
+num_timesteps = 20
+grid = (8, 8)
 num_states = 2*grid[0]*grid[1]
 
 # All (label, directory_suffix) pairs
@@ -72,8 +72,8 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
         
         print(f"  Episode {ep}")
 
-        gt_mf_blue = np.load(os.path.join(ground_truth_dir, f"ep_{ep}.npy"))[:, :32]
-        gt_mf_red = np.load(os.path.join(ground_truth_dir, f"ep_{ep}.npy"))[:, 32:]
+        gt_mf_blue = np.load(os.path.join(ground_truth_dir, f"ep_{ep}.npy"))[:, :num_states]
+        gt_mf_red = np.load(os.path.join(ground_truth_dir, f"ep_{ep}.npy"))[:, num_states:]
 
         gt_mf_blue = pad_array(gt_mf_blue, num_timesteps, num_states)
         gt_mf_red = pad_array(gt_mf_red, num_timesteps, num_states)

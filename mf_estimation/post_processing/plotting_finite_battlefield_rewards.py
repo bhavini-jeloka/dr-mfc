@@ -17,10 +17,10 @@ def get_reward_discrepancy(config_dir, ep, ground_truth):
     else:
         raise FileNotFoundError(f"Missing file: {path}")
 
-comm_rounds_list = [5, 10, 15, 20, 25, 30]
+comm_rounds_list = [10, 20, 30, 40, 50, 60]
 num_episodes = 25
-num_timesteps = 21
-grid = (4, 4)
+num_timesteps = 20
+grid = (8, 8)
 
 # All (label, directory_suffix) pairs
 configurations = [
