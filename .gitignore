@@ -7,6 +7,8 @@ png
 data
 results
 generate_configs.py
+.DS_Store
+mf_estimation/.DS_Store
 
 *.py[cod]
 *$py.class
