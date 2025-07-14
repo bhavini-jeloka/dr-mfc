@@ -28,7 +28,7 @@
     "num_comm_rounds": 7,
 
     "algorithm": "mf_mappo",
-    "episode_length": 80,
+    "episode_length": 100,
     "num_test_episodes": 25,
     "render_mode": "rgb_array",
 
