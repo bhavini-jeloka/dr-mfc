@@ -32,7 +32,7 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
     for coeff in lcp_coeff:
 
         save_dir_des = f"9x9-nav-varying-LCP-coeff/Coeff_{coeff}/mean_field_trajectory/grid_{grid[0]}x{grid[1]}_partial_obs_False_comm_1"
-        save_dir_est = f"9x9-nav-varying-LCP-coeff/Coeff_{coeff}/mean_field_trajectory/grid_{grid[0]}x{grid[1]}_partial_obs_True_comm_{num_comm_rounds}_benchmark"
+        save_dir_est = f"9x9-nav-varying-LCP-coeff/Coeff_{coeff}/mean_field_trajectory/grid_{grid[0]}x{grid[1]}_partial_obs_True_comm_{num_comm_rounds}"
 
         l1_dpc = np.zeros((num_episodes, num_timesteps))
         for ep in range(num_episodes):
@@ -62,7 +62,7 @@ fig.suptitle(
     fontsize=18
 )
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-fig.savefig("finite_subgrid_comms_lcp_l1_error_vs_time_1000_benchmark.png", dpi=300) 
+fig.savefig("finite_subgrid_comms_lcp_l1_error_vs_time_1000.png", dpi=300) 
 
 
 fig2, axs2 = plt.subplots(1, 1, figsize=(12, 8), sharey=True)
@@ -76,7 +76,7 @@ for coeff in lcp_coeff:
     for num_comm_rounds in comm_rounds_list:
 
         save_dir_des = f"9x9-nav-varying-LCP-coeff/Coeff_{coeff}/mean_field_trajectory/grid_{grid[0]}x{grid[1]}_partial_obs_False_comm_1"
-        save_dir_est = f"9x9-nav-varying-LCP-coeff/Coeff_{coeff}/mean_field_trajectory/grid_{grid[0]}x{grid[1]}_partial_obs_True_comm_{num_comm_rounds}_benchmark"
+        save_dir_est = f"9x9-nav-varying-LCP-coeff/Coeff_{coeff}/mean_field_trajectory/grid_{grid[0]}x{grid[1]}_partial_obs_True_comm_{num_comm_rounds}"
 
         l1_dpc = np.zeros((num_episodes, num_timesteps))
 
@@ -107,4 +107,4 @@ for coeff in lcp_coeff:
     axs2.legend(fontsize=24, loc='upper right')
 
 fig2.tight_layout()
-fig2.savefig("finite_subgrid_comms_lcp_total_l1_error_vs_time_1000_benchmark.png", dpi=300) 
+fig2.savefig("finite_subgrid_comms_lcp_total_l1_error_vs_time_1000.png", dpi=300) 
