@@ -51,15 +51,17 @@ for num_comm_rounds in comm_rounds_list:
         l1_dpc = np.load(f'l1_errors_dpc_all_seeds_{num_comm_rounds}.npy')         # shape: (seeds, time)
         l1_benchmark = np.load(f'l1_errors_benchmark_all_seeds_{num_comm_rounds}.npy')
 
-        avg_over_seeds_dpc = l1_dpc.mean(axis=0)        # shape: (time,)
-        avg_over_seeds_benchmark = l1_benchmark.mean(axis=0)
+        # First sum over time (axis=1), then mean over seeds (axis=0)
+        sum_per_seed_dpc = l1_dpc.sum(axis=1)             # shape: (seeds,)
+        sum_per_seed_benchmark = l1_benchmark.sum(axis=1)
 
-        sum_dpc = avg_over_seeds_dpc.sum()
-        sum_benchmark = avg_over_seeds_benchmark.sum()
+        mean_sum_dpc = sum_per_seed_dpc.mean()            # scalar
+        mean_sum_benchmark = sum_per_seed_benchmark.mean()
 
-        summed_avg_l1_dpc.append(sum_dpc)
-        summed_avg_l1_benchmark.append(sum_benchmark)
+        summed_avg_l1_dpc.append(mean_sum_dpc)
+        summed_avg_l1_benchmark.append(mean_sum_benchmark)
         valid_comm_rounds.append(num_comm_rounds)
+
     except FileNotFoundError:
         print(f"Missing file for comm_rounds={num_comm_rounds}, skipping.")
 
