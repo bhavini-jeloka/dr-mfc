@@ -132,13 +132,13 @@
         "blue": "battlefield/4x4/0",
         "red": "battlefield/4x4/1"
     },
-    "num_comm_rounds": 10,
+    "num_comm_rounds": 15,
     "estimation_module": {
-        "blue": "benchmark",
+        "blue": null,
         "red": null
     },
     "comms_graph_struct": {
-        "blue": "subgrid",
+        "blue": null,
         "red": null
     },
     "algorithm": "mf_mappo",
