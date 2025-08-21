@@ -1,38 +1,148 @@
-{ 
+{
     "seed": 42,
-    "env_name": "gym_mf_envs/MF-Nav-v0",
-    "size": [9, 9],
-    "num_parallel_envs" : 1,
-
-    "num_population": 1,
-    "num_agent_map": {"blue": 1000},
-    "population_color_list": {"blue": [0, 0, 255]},
-
+    "env_name": "gym_mf_envs/MF-Battle-v0",
+    "size": [
+        4,
+        4
+    ],
+    "num_parallel_envs": 1,
+    "num_population": 2,
+    "num_agent_map": {
+        "blue": 100,
+        "red": 100
+    },
+    "population_color_list": {
+        "blue": [
+            0,
+            0,
+            255
+        ],
+        "red": [
+            255,
+            0,
+            0
+        ]
+    },
     "action_dim": 5,
-    "action_map": {"blue": [[0,1], [1,0], [0,-1], [-1, 0], [0,0]]},
-
+    "action_map": {
+        "blue": [
+            [
+                0,
+                1
+            ],
+            [
+                1,
+                0
+            ],
+            [
+                0,
+                -1
+            ],
+            [
+                -1,
+                0
+            ],
+            [
+                0,
+                0
+            ]
+        ],
+        "red": [
+            [
+                0,
+                1
+            ],
+            [
+                1,
+                0
+            ],
+            [
+                0,
+                -1
+            ],
+            [
+                -1,
+                0
+            ],
+            [
+                0,
+                0
+            ]
+        ]
+    },
     "identical_grid_world": false,
-
-    "n_obstacles":{"blue": 12},
-    "random_obstacles":{"blue": false},
-    "obstacle_locations": {"blue": [[2, 3], [2, 4], [2, 5], [3, 2], [3, 6], [4, 2], 
-    [4, 6], [5, 2], [5, 6], [6, 3], [6, 4], [6, 5]]},
-    "penetrable_obstacles": {"blue": true},
-
-    "target_locations":{"blue": [[3, 3], [3, 4], [3, 5], [4, 3], [4, 4], [4, 5], 
-    [5, 3], [5, 4], [5, 5]]},
-    "n_targets":{"blue": 9},
-    "random_targets":{"blue": false},
-
-    "policy_type": "lcp_policy_9x9",
-    "num_comm_rounds": 6,
-
+    "n_obstacles": {
+        "blue": 1,
+        "red": 2
+    },
+    "random_obstacles": {
+        "blue": false,
+        "red": false
+    },
+    "obstacle_locations": {
+        "blue": [
+            [
+                1,
+                1
+            ]
+        ],
+        "red": [
+            [
+                1,
+                1
+            ],
+            [
+                0,
+                0
+            ]
+        ]
+    },
+    "penetrable_obstacles": {
+        "blue": false,
+        "red": false
+    },
+    "target_locations": {
+        "blue": [
+            [
+                0,
+                0
+            ]
+        ],
+        "red": null
+    },
+    "n_targets": {
+        "blue": 1,
+        "red": 0
+    },
+    "random_targets": {
+        "blue": false,
+        "red": true
+    },
+    "oracle_kwargs": {
+        "time_penalty": {
+            "blue": -0.1,
+            "red": 0.1
+        },
+        "alpha": {
+            "blue": 15,
+            "red": 5
+        }
+    },
+    "policy_type": {
+        "blue": "battlefield/4x4/0",
+        "red": "battlefield/4x4/1"
+    },
+    "num_comm_rounds": 10,
+    "estimation_module": {
+        "blue": null,
+        "red": null
+    },
+    "comms_graph_struct": {
+        "blue": null,
+        "red": null
+    },
     "algorithm": "mf_mappo",
-    "episode_length": 100,
-    "num_test_episodes": 25,
-    "render_mode": "rgb_array",
-
-    "partial_obs": true
-    
-  }
-
+    "episode_length": 20,
+    "num_test_episodes": 100,
+    "render_mode": "rgb_array"
+}
