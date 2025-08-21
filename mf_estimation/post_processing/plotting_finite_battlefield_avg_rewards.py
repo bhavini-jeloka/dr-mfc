@@ -10,13 +10,8 @@ grid = (4, 4)
 
 # All (label, directory_suffix) pairs
 configurations = [
-    ("D-PC (B) v Benchmark (R)", "blue-d-pc_red-benchmark"),
     ("D-PC (B) v D-PC (R)", "blue-d-pc_red-d-pc"),
     ("D-PC (B) v Full-Info (R)", "blue-d-pc_red-None"),
-    ("Benchmark (B) v Benchmark (R)", "blue-benchmark_red-benchmark"),
-    ("Benchmark (B) v D-PC (R)", "blue-benchmark_red-d-pc"),
-    ("Benchmark (B) v Full-Info (R)", "blue-benchmark_red-None"),
-    ("Full-Info (B) v Benchmark (R)", "blue-None_red-benchmark"),
     ("Full-Info (B) v D-PC (R)", "blue-None_red-d-pc"),
     ("Full-Info (B) v Full-Info (R)", "blue-None_red-None")
 ]
@@ -70,7 +65,7 @@ for idx, comm_rounds in enumerate(comm_rounds_list):
         fmt=".2f",
         cmap="YlOrBr",
         vmin=0,
-        vmax=3,
+        vmax=7,
         xticklabels=red_agents,
         yticklabels=blue_agents,
         cbar=cbar,
