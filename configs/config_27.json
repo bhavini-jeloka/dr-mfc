@@ -132,10 +132,10 @@
         "blue": "battlefield/4x4/0",
         "red": "battlefield/4x4/1"
     },
-    "num_comm_rounds": 20,
+    "num_comm_rounds": 15,
     "estimation_module": {
         "blue": null,
-        "red": "benchmark"
+        "red": "d-pc"
     },
     "comms_graph_struct": {
         "blue": null,

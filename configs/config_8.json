@@ -135,7 +135,7 @@
     "num_comm_rounds": 7,
     "estimation_module": {
         "blue": null,
-        "red": "d-pc"
+        "red": "benchmark"
     },
     "comms_graph_struct": {
         "blue": null,

@@ -3,9 +3,9 @@ import numpy as np
 import os
 import seaborn as sns
 
-comm_rounds_list = [5, 10, 15, 20, 25, 30]
+comm_rounds_list = [5, 7, 10, 12, 15, 20]
 total_comm_rounds = len(comm_rounds_list)
-num_episodes = 25
+num_episodes = 100
 grid = (4, 4)
 
 # All (label, directory_suffix) pairs

@@ -134,11 +134,11 @@
     },
     "num_comm_rounds": 15,
     "estimation_module": {
-        "blue": "d-pc",
+        "blue": null,
         "red": null
     },
     "comms_graph_struct": {
-        "blue": "subgrid",
+        "blue": null,
         "red": null
     },
     "algorithm": "mf_mappo",

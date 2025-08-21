@@ -16,16 +16,16 @@ def get_l1_error(config_dir, ep, num_timesteps, num_states, ground_truth_blue, g
     else:
         raise FileNotFoundError(f"Missing file: {path}")
 
-comm_rounds_list = [10, 20, 30, 40, 50, 60]
-num_episodes = 25
+comm_rounds_list = [5, 7, 10, 12, 15, 20]
+num_episodes = 100
 num_timesteps = 25
-grid = (8, 8)
+grid = (4, 4)
 num_states = 2 * grid[0] * grid[1]
 
 # All (label, directory_suffix) pairs
 configurations = [
-    ("D-PC", "blue-None_red-d-pc"),
-    ("Benchmark", "blue-None_red-benchmark"),
+    ("D-PC", "blue-d-pc_red-None"),
+    ("Benchmark", "blue-benchmark_red-None"),
 ]
 
 base_dir = "mf"
