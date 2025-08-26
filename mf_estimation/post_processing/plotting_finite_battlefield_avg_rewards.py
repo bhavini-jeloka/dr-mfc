@@ -3,10 +3,10 @@ import numpy as np
 import os
 import seaborn as sns
 
-comm_rounds_list = [5, 7, 10, 12, 15, 20]
+comm_rounds_list = [5, 7, 10, 15, 20, 30]
 total_comm_rounds = len(comm_rounds_list)
 num_episodes = 100
-grid = (4, 4)
+grid = (8, 8)
 
 # All (label, directory_suffix) pairs
 configurations = [
@@ -70,22 +70,23 @@ for idx, comm_rounds in enumerate(comm_rounds_list):
         yticklabels=blue_agents,
         cbar=cbar,
         cbar_ax=cbar_ax_use,
-        cbar_kws={'label': 'Relative Percentage Error'} if cbar else None
+        cbar_kws={'label': 'Relative Percentage Error'} if cbar else None,
+        annot_kws={"fontsize": 20}
     )
 
     # Set custom title with LaTeX
-    axs[idx].set_title(fr'$R_{{\mathrm{{com}}}} = {comm_rounds}$', fontsize=14)
+    axs[idx].set_title(fr'$R_{{\mathrm{{com}}}} = {comm_rounds}$', fontsize=20)
     
-    axs[idx].tick_params(axis='y', labelsize=14)
+    axs[idx].tick_params(axis='y', labelsize=20)
     for ticklabel in axs[idx].get_yticklabels():
         ticklabel.set_color('blue')
         
-    axs[idx].tick_params(axis='x', labelsize=14)
+    axs[idx].tick_params(axis='x', labelsize=20)
     for ticklabel in axs[idx].get_xticklabels():
         ticklabel.set_color('red')
 
 # Set the font size of the color bar label after the heatmaps are drawn
-cbar_ax.yaxis.label.set_fontsize(16)
+cbar_ax.yaxis.label.set_fontsize(20)
 
 fig.suptitle("Average Test Rewards Heat Map (by Communication Rounds)", fontsize=20)
 plt.tight_layout(rect=[0, 0, 0.9, 0.96])

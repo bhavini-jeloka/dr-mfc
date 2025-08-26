@@ -16,10 +16,10 @@ def get_l1_error(config_dir, ep, num_timesteps, num_states, ground_truth_blue, g
     else:
         raise FileNotFoundError(f"Missing file: {path}")
 
-comm_rounds_list = [5, 7, 10, 12, 15, 20]
+comm_rounds_list = [5, 7, 10, 15, 20, 30]
 num_episodes = 100
 num_timesteps = 25
-grid = (4, 4)
+grid = (8, 8)
 num_states = 2 * grid[0] * grid[1]
 
 # All (label, directory_suffix) pairs
@@ -85,17 +85,18 @@ for idx, num_comm_rounds in enumerate(comm_rounds_list):
                 linestyle=style_map[label], 
                 label=f"Red {label}")
 
-    ax.set_title(fr"$R_{{\mathrm{{com}}}} = {num_comm_rounds}$", fontsize=14)
-    ax.set_xlabel("Time", fontsize=12)
+    ax.set_title(fr"$R_{{\mathrm{{com}}}} = {num_comm_rounds}$", fontsize=20)
+    ax.set_xlabel("Time", fontsize=20)
     if idx % 3 == 0:
-        ax.set_ylabel("Total Variation Error", fontsize=12)
+        ax.set_ylabel("Total Variation Error", fontsize=20)
     ax.grid(True)
+    ax.tick_params(axis='both', which='major', labelsize=20)
 
 # Create one legend for all
 handles, labels = axs[0].get_legend_handles_labels()
 fig.legend(handles, labels, fontsize=12, loc="center right", frameon=False)
 
-fig.suptitle("Comparing Total Variation Error (Blue vs Red)", fontsize=18)
+fig.suptitle("Comparing Total Variation Error (Blue vs Red)", fontsize=20)
 plt.tight_layout(rect=[0, 0, 0.85, 0.95])
 plt.savefig(f"finite_subgrid_battlefield_l1_error_{grid[0]}x{grid[1]}.png", dpi=300)
 plt.show()
